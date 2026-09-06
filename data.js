@@ -7,7 +7,8 @@
 const ILM = {
 
   app: {
-    name: "ILM Academy",
+    name: "ILM AKADEMIYASI",
+    slogan: "Qadrdon ta'lim markazingiz",
     course: "Fonetika",          // hozir faqat shu kurs; Grammatika keyin
     version: 1
   },
@@ -22,7 +23,7 @@ const ILM = {
      Har guruhga alohida kod berish mumkin: ["ILM-2026", "A-GURUH", ...]
      Ustoz va ustoz+ kodsiz kiradi. */
   access: {
-    codes: ["ILM-2026"]
+    codes: ["ILM-2019"]
   },
 
   /* Qulf qoidalari */

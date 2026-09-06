@@ -90,7 +90,8 @@ function grantAccess(code) {
   progress.group = code; save();
 }
 function rGate() {
-  return '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Xush kelibsiz</h1></div></div>' +
+  return '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Xush kelibsiz</h1>' +
+    '<div class="sub" style="color:var(--gold2)">' + esc(ILM.app.slogan || '') + '</div></div></div>' +
     '<div class="card blue"><div class="row"><div class="avatar">' + esc(user.name.charAt(0).toUpperCase()) + '</div>' +
     '<div class="grow"><div class="t">' + esc(user.name) + '</div><div class="d">@' + esc(user.username || '—') + ' · ID ' + (user.id || '—') + '</div></div></div></div>' +
     '<div class="card"><div class="t">Kirish kodi</div><div class="d">Kodni o\'quv markazidan olasiz. Bir marta kiritiladi.</div>' +
@@ -193,7 +194,9 @@ function ytId(u) {
 /* ---- Asosiy ---- */
 function rHome() {
   var cur = currentLesson(), done = doneCount(), first = user.name.split(' ')[0];
-  var h = top('<span class="ar">أَهْلًا</span> ' + esc(first), ILM.app.name, false);
+  var h = '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div>' +
+    '<h1><span class="ar">أَهْلًا</span> ' + esc(first) + '</h1>' +
+    '<div class="sub" style="color:var(--gold2)">' + esc(ILM.app.slogan || '') + '</div></div></div>';
 
   h += '<div class="card blue"><div class="row">' +
     '<div class="avatar">' + esc(first.charAt(0).toUpperCase()) + '</div>' +
