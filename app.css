@@ -222,4 +222,11 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .tog{width:52px; height:30px; border-radius:16px; background:rgba(255,255,255,.15); position:relative; border:none; flex:none}
 .tog::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:.2s}
 .tog.on{background:var(--gold)} .tog.on::after{left:25px}
+.inp{
+  width:100%; height:54px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.08);
+  color:#fff; font-size:20px; font-weight:600; letter-spacing:.08em; text-align:center; padding:0 14px; margin:14px 0 10px;
+  outline:none; font-family:inherit; text-transform:uppercase;
+}
+.inp:focus{border-color:var(--gold)}
+.inp::placeholder{color:var(--hint); font-weight:500; letter-spacing:0; text-transform:none}
 #err{position:fixed; left:0; right:0; top:0; z-index:999; background:#c0392b; color:#fff; padding:10px 14px; font:12px/1.5 monospace; white-space:pre-wrap; display:none}

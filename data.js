@@ -18,6 +18,13 @@ const ILM = {
     ustoz: []
   },
 
+  /* Kirish kodlari — o'quvchi birinchi kirganda so'raladi (bir marta).
+     Har guruhga alohida kod berish mumkin: ["ILM-2026", "A-GURUH", ...]
+     Ustoz va ustoz+ kodsiz kiradi. */
+  access: {
+    codes: ["ILM-2026"]
+  },
+
   /* Qulf qoidalari */
   rules: {
     passPct: 70,                 // testdan o'tish foizi

@@ -62,13 +62,42 @@ function save() {
 function loadCloud(cb) {
   if (!(tg && tg.CloudStorage)) return cb();
   try {
-    tg.CloudStorage.getItem('progress', function (err, val) {
+    tg.CloudStorage.getItems(['progress', 'access'], function (err, val) {
       if (!err && val) {
-        try { var c = JSON.parse(val); if ((c.updated || 0) > (progress.updated || 0)) progress = merge(fresh(), c); } catch (e) {}
+        if (val.progress) { try { var c = JSON.parse(val.progress); if ((c.updated || 0) > (progress.updated || 0)) progress = merge(fresh(), c); } catch (e) {} }
+        if (val.access && !access) { access = val.access; try { localStorage.setItem(AKEY, access); } catch (e) {} }
       }
       cb();
     });
   } catch (e) { cb(); }
+}
+
+/* ---------- kirish kodi ---------- */
+var AKEY = 'ilm-access-' + user.id;
+var access = null;
+try { access = localStorage.getItem(AKEY); } catch (e) {}
+function gateOK() { return st.role !== 'oquvchi' || !!access; }
+function codeValid(c) {
+  var list = (ILM.access && ILM.access.codes) || [];
+  c = String(c || '').trim().toUpperCase().replace(/\s+/g, '');
+  for (var i = 0; i < list.length; i++) if (String(list[i]).toUpperCase().replace(/\s+/g, '') === c) return list[i];
+  return null;
+}
+function grantAccess(code) {
+  access = code;
+  try { localStorage.setItem(AKEY, code); } catch (e) {}
+  if (tg && tg.CloudStorage) { try { tg.CloudStorage.setItem('access', code, function () {}); } catch (e) {} }
+  progress.group = code; save();
+}
+function rGate() {
+  return '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Xush kelibsiz</h1></div></div>' +
+    '<div class="card blue"><div class="row"><div class="avatar">' + esc(user.name.charAt(0).toUpperCase()) + '</div>' +
+    '<div class="grow"><div class="t">' + esc(user.name) + '</div><div class="d">@' + esc(user.username || '—') + ' · ID ' + (user.id || '—') + '</div></div></div></div>' +
+    '<div class="card"><div class="t">Kirish kodi</div><div class="d">Kodni o\'quv markazidan olasiz. Bir marta kiritiladi.</div>' +
+    '<input id="code" class="inp" placeholder="Kodni kiriting" autocomplete="off" autocapitalize="characters">' +
+    (st.gateErr ? '<div class="hint" style="color:var(--red);text-align:center;margin-bottom:10px">Kod noto\'g\'ri — qayta urinib ko\'ring</div>' : '') +
+    '<button class="btn gold wide" data-act="gate">Kirish</button></div>' +
+    '<div class="hint" style="text-align:center">Kod yo\'qmi? Markaz bilan bog\'laning.</div>';
 }
 
 /* ---------- dars holati ---------- */
@@ -473,6 +502,13 @@ var ICONS = {
   imtihon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.5L7 22l5-3 5 3-1.2-8.5"/></svg>'
 };
 function render() {
+  if (!gateOK()) {
+    document.getElementById('view').innerHTML = rGate();
+    document.getElementById('nav').innerHTML = '';
+    var inp = document.getElementById('code');
+    if (inp) { inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryGate(); }); inp.focus(); }
+    return;
+  }
   var fn = SCREENS[st.screen] || rHome;
   document.getElementById('view').innerHTML = fn();
   var nav = [['home', 'Asosiy'], ['lessons', 'Darslar'], ['mashq', 'Mashq'], ['imtihon', 'Imtihon']];
@@ -505,6 +541,7 @@ document.getElementById('app').addEventListener('click', function (e) {
     return;
   }
   var a = t.dataset.act;
+  if (a === 'gate') return tryGate();
   if (a === 'back') return back();
   if (a === 'testmode') { st.testMode = !st.testMode; toast(st.testMode ? 'Sinov rejimi yoqildi' : 'Sinov rejimi o\'chdi'); return render(); }
   if (a === 'viewas') { st.viewAs = st.viewAs ? null : 'oquvchi'; if (st.viewAs) st.testMode = false; setTab('home'); return; }
@@ -523,6 +560,13 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'vidseen') { markVideo(+t.dataset.n); toast('Belgilandi ✓'); return render(); }
   if (a === 'play') { var q = st.run && st.run.qs[st.run.i]; if (q && q.src) { try { new Audio(q.src).play(); } catch (e2) {} } else toast('Audio hali qo\'shilmagan'); return; }
 });
+
+function tryGate() {
+  var inp = document.getElementById('code'); if (!inp) return;
+  var ok = codeValid(inp.value);
+  if (ok) { st.gateErr = false; grantAccess(ok); toast('Xush kelibsiz!'); render(); }
+  else { st.gateErr = true; render(); }
+}
 
 /* ---------- ishga tushirish ---------- */
 render();
