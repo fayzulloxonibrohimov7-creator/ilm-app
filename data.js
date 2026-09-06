@@ -14,7 +14,7 @@ const ILM = {
 
   /* Rollar — Telegram ID raqamlari (ilovaning Asosiy ekranida ko'rinadi) */
   roles: {
-    ustozplus: [],               // masalan: [123456789]
+    ustozplus: [8558107235],     // egasi (Fayzulloh)
     ustoz: []
   },
 
