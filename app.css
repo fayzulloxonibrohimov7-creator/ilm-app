@@ -1,0 +1,225 @@
+/* ============================================================
+   ILM ACADEMY — ko'rinish.  Rang tamoyili: ko'k + tilla + oq
+   (ILM-UI-Design-System.md asosida, to'q rejim)
+   ============================================================ */
+:root{
+  --bg:#061527; --bg2:#0A1F3A;
+  --card:#0F2A4A; --card2:#143761; --card3:#1A4478;
+  --line:rgba(255,255,255,.09);
+  --blue:#1A5A9E; --blue7:#123E73; --blue-l:#2E7DD6;
+  --gold:#D4AF37; --gold2:#E9CB6A; --gold3:#F4DC8A; --on-gold:#2A2105;
+  --text:#FFFFFF; --text2:#B7CBE3; --hint:#7F9BBC;
+  --red:#E63946; --ok:#D4AF37;
+  --g-blue:linear-gradient(150deg,#1F6BB8 0%,#0E3A6E 88%);
+  --g-deep:linear-gradient(150deg,#164A85 0%,#071A33 100%);
+  --g-gold:linear-gradient(135deg,#F4DC8A 0%,#D4AF37 58%,#B8921E 100%);
+  --g-hero:radial-gradient(900px 620px at 88% 6%, #1F5FA6 0%, #0E3564 48%, #061527 100%);
+  --r:22px; --r2:16px;
+  --ui:-apple-system,"SF Pro Text","Segoe UI",Roboto,Inter,system-ui,sans-serif;
+  --ar:"Sakkal Majalla","Traditional Arabic","Noto Naskh Arabic","Amiri",serif;
+  --nav:82px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--bg); color:var(--text); font-family:var(--ui); font-size:16px;
+  -webkit-font-smoothing:antialiased; overscroll-behavior:none;
+}
+#app{max-width:480px; margin:0 auto; min-height:100vh; position:relative; background:var(--g-hero)}
+#view{padding:18px 18px calc(var(--nav) + 24px)}
+.ar{font-family:var(--ar); direction:rtl}
+button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
+a{color:var(--gold2)}
+
+/* ---- sarlavha ---- */
+.top{display:flex; align-items:center; gap:10px; margin:6px 0 18px; min-height:36px}
+.top h1{font-size:30px; font-weight:600; letter-spacing:-.015em; margin:0; line-height:1.1; flex:1}
+.top .sub{font-size:14px; color:var(--hint); margin-top:4px; font-weight:500}
+.back{
+  width:38px; height:38px; border-radius:12px; border:1px solid var(--line); background:var(--card);
+  display:grid; place-items:center; font-size:20px; flex:none;
+}
+.kicker{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold2); font-weight:600}
+h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
+
+/* ---- kartalar ---- */
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25); margin-bottom:12px; position:relative; overflow:hidden;
+}
+.card.blue{background:var(--g-blue); border-color:rgba(255,255,255,.12)}
+.card.deep{background:var(--g-deep)}
+.card.gold{background:var(--g-gold); color:var(--on-gold); border-color:transparent}
+.card.gold .kicker,.card.gold .hint{color:rgba(42,33,5,.7)}
+.card.tap{cursor:pointer; transition:transform .12s}
+.card.tap:active{transform:scale(.985)}
+.card .big{font-size:56px; font-weight:700; letter-spacing:-.02em; line-height:1}
+.card .t{font-size:21px; font-weight:600; line-height:1.2; margin:4px 0}
+.card .d{font-size:14.5px; color:var(--text2); line-height:1.35}
+.card.gold .d{color:rgba(42,33,5,.75)}
+.hint{color:var(--hint); font-size:13.5px}
+.row{display:flex; align-items:center; gap:12px}
+.row .grow{flex:1; min-width:0}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.chev{color:var(--hint); font-size:22px; flex:none}
+.card.gold .chev{color:rgba(42,33,5,.6)}
+
+/* ---- profil ---- */
+.avatar{
+  width:64px; height:64px; border-radius:50%; background:var(--card3); display:grid; place-items:center;
+  font-size:26px; font-weight:700; color:var(--gold2); flex:none; position:relative;
+}
+.avatar::after{content:""; position:absolute; inset:-4px; border-radius:50%; border:3px solid var(--gold); opacity:.85}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:20px; font-size:13px;
+  font-weight:600; background:rgba(255,255,255,.12); border:1px solid var(--line); margin:4px 6px 0 0;
+}
+.pill.gold{background:var(--gold); color:var(--on-gold); border-color:transparent}
+.pill.blue{background:var(--blue-l); color:#fff}
+.stats{display:flex; margin-top:16px; padding-top:14px; border-top:1px solid var(--line)}
+.stats div{flex:1; text-align:center}
+.stats div+div{border-left:1px solid var(--line)}
+.stats b{display:block; font-size:22px; font-weight:700}
+.stats span{font-size:12.5px; color:var(--text2)}
+
+/* ---- progress ---- */
+.bar{height:8px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden; margin-top:10px}
+.bar i{display:block; height:100%; background:var(--g-gold); border-radius:6px; transition:width .5s}
+.card.gold .bar{background:rgba(42,33,5,.18)} .card.gold .bar i{background:#2A2105}
+
+/* ---- tugmalar ---- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px; height:50px; padding:0 22px;
+  border-radius:26px; border:none; font-weight:600; font-size:16px; transition:.12s;
+}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:var(--g-gold); color:var(--on-gold); box-shadow:0 4px 14px rgba(212,175,55,.3)}
+.btn.blue{background:var(--blue-l); color:#fff}
+.btn.ghost{background:rgba(255,255,255,.1); border:1px solid var(--line)}
+.btn.red{background:var(--red); color:#fff}
+.btn.wide{width:100%}
+.btn.sm{height:40px; padding:0 16px; font-size:14px}
+.btn:disabled{opacity:.4; cursor:default; transform:none}
+
+/* ---- tablar (Fonetika | Grammatika) ---- */
+.tabs{display:flex; background:rgba(255,255,255,.08); border:1px solid var(--line); border-radius:16px; padding:4px; margin:0 0 18px}
+.tabs button{flex:1; height:42px; border-radius:12px; border:none; background:none; font-weight:600; font-size:15px; color:var(--text2)}
+.tabs button.on{background:var(--card3); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+/* ---- dars ro'yxati ---- */
+.lesson{
+  display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r2); padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:.12s;
+}
+.lesson:active{transform:scale(.985)}
+.lesson .num{
+  width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-weight:700; font-size:17px;
+  background:var(--card3); color:var(--gold2); flex:none;
+}
+.lesson.done .num{background:var(--g-gold); color:var(--on-gold)}
+.lesson.current{border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.18)}
+.lesson.current .num{background:var(--blue-l); color:#fff; box-shadow:0 0 0 2px var(--gold)}
+.lesson.locked{opacity:.55}
+.lesson.locked .num{background:rgba(255,255,255,.08); color:var(--hint)}
+.lesson .ttl{flex:1; min-width:0}
+.lesson .ttl .ar{font-size:22px; line-height:1.25; text-align:right; color:#fff}
+.lesson .ttl .ar.empty{color:var(--hint); font-family:var(--ui); font-size:15px; text-align:left; font-weight:600; direction:ltr}
+.cic{width:46px; height:46px; border-radius:14px; display:grid; place-items:center; background:var(--card3); font-size:22px; flex:none}
+.lesson .ttl .uz{font-size:13.5px; color:var(--text2); margin-top:2px}
+.lesson .st{flex:none; font-size:14px; font-weight:600; color:var(--hint); text-align:right}
+.lesson.done .st{color:var(--gold2)}
+.lesson.current .st{color:var(--gold2)}
+.lesson.exam{background:var(--g-deep); border-color:rgba(212,175,55,.35)}
+.lesson.exam .num{background:transparent; border:2px solid var(--gold); color:var(--gold2); border-radius:50%}
+.blockhead{display:flex; align-items:baseline; gap:10px; margin:24px 0 10px}
+.blockhead b{font-size:16px; color:var(--text)}
+.blockhead span{font-size:13px; color:var(--hint)}
+
+/* ---- dars ichi ---- */
+.part{
+  display:flex; align-items:center; gap:14px; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--r); padding:18px; margin-bottom:12px; cursor:pointer;
+}
+.part .ic{width:52px; height:52px; border-radius:16px; display:grid; place-items:center; font-size:24px; background:var(--card3); flex:none}
+.part.ok .ic{background:var(--g-gold); color:var(--on-gold)}
+.part .t{font-size:18px; font-weight:600}
+.part .d{font-size:13.5px; color:var(--text2); margin-top:2px}
+.part .mark{flex:none; font-size:20px; color:var(--gold2)}
+.part.dis{opacity:.5; cursor:default}
+
+/* ---- kitob (betlar) ---- */
+.pagewrap{position:relative; background:#fff; border-radius:14px; overflow:hidden; margin-bottom:14px; box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.pagewrap img{display:block; width:100%}
+.wm{
+  position:absolute; inset:0; pointer-events:none; overflow:hidden; opacity:.16;
+  background-image:repeating-linear-gradient(-30deg, transparent 0 80px, rgba(0,0,0,.001) 80px 81px);
+}
+.wm span{
+  position:absolute; white-space:nowrap; font-weight:700; font-size:18px; color:#123E73; transform:rotate(-30deg);
+  letter-spacing:.06em;
+}
+.placeholder{
+  border:2px dashed rgba(255,255,255,.18); border-radius:var(--r); padding:34px 20px; text-align:center;
+  color:var(--hint); font-size:15px; line-height:1.5;
+}
+.placeholder b{display:block; color:var(--text2); font-size:17px; margin-bottom:6px}
+
+/* ---- video ---- */
+.video{position:relative; width:100%; aspect-ratio:16/9; background:#000; border-radius:16px; overflow:hidden; margin-bottom:14px}
+.video iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+
+/* ---- test ---- */
+.qhead{display:flex; justify-content:space-between; align-items:center; font-size:13.5px; color:var(--hint); margin-bottom:8px; font-weight:600}
+.qtext{font-size:21px; font-weight:600; line-height:1.3; margin:14px 0 20px}
+.opt{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:var(--card); border:1px solid var(--line);
+  border-radius:16px; padding:15px 16px; margin-bottom:10px; font-size:16.5px; font-weight:500; transition:.12s;
+}
+.opt .l{width:30px; height:30px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.1); font-weight:700; font-size:14px; flex:none}
+.opt.pick{border-color:var(--gold); background:var(--card3)}
+.opt.pick .l{background:var(--gold); color:var(--on-gold)}
+.opt.right{border-color:var(--gold); background:rgba(212,175,55,.18)}
+.opt.wrong{border-color:var(--red); background:rgba(230,57,70,.18)}
+.audiobox{display:flex; align-items:center; gap:12px; background:var(--card2); border-radius:16px; padding:14px; margin-bottom:16px}
+.audiobox button{width:52px; height:52px; border-radius:50%; background:var(--g-gold); color:var(--on-gold); border:none; font-size:20px}
+.result .big{font-size:64px}
+.ring{width:150px; height:150px; border-radius:50%; margin:10px auto 18px; display:grid; place-items:center; position:relative}
+.ring b{font-size:34px; font-weight:700}
+.ring small{display:block; font-size:12px; color:var(--text2); font-weight:500}
+
+/* ---- pastki menyu ---- */
+#nav{
+  position:fixed; bottom:12px; left:50%; transform:translateX(-50%); width:calc(100% - 24px); max-width:456px;
+  height:var(--nav); background:rgba(10,31,58,.92); backdrop-filter:blur(16px); border:1px solid var(--line);
+  border-radius:30px; display:flex; align-items:center; justify-content:space-around; padding:0 6px; z-index:50;
+  box-shadow:0 8px 30px rgba(0,0,0,.45);
+}
+#nav button{
+  flex:1; height:64px; border:none; background:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; font-size:12px; font-weight:600; color:var(--text2); border-radius:22px;
+}
+#nav button i{font-style:normal; font-size:22px; line-height:1}
+#nav button.on{background:var(--card3); color:#fff}
+#nav button.on i{color:var(--gold2)}
+
+/* ---- kichik narsalar ---- */
+.badge{display:inline-block; padding:3px 9px; border-radius:10px; font-size:12px; font-weight:700; background:rgba(255,255,255,.12)}
+.badge.gold{background:var(--gold); color:var(--on-gold)}
+.badge.red{background:var(--red); color:#fff}
+.soon{
+  text-align:center; padding:50px 20px; color:var(--hint); font-size:15px;
+}
+.soon b{display:block; font-size:22px; color:var(--gold2); margin-bottom:8px}
+.toast{
+  position:fixed; left:50%; bottom:calc(var(--nav) + 26px); transform:translateX(-50%); background:var(--gold); color:var(--on-gold);
+  padding:10px 18px; border-radius:20px; font-weight:600; font-size:14px; z-index:60; opacity:0; transition:.25s; pointer-events:none;
+  box-shadow:0 6px 20px rgba(0,0,0,.4);
+}
+.toast.on{opacity:1}
+.switch{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1px solid var(--line)}
+.switch:first-child{border-top:none}
+.switch .k{font-weight:600} .switch .v{color:var(--hint); font-size:13.5px; margin-top:2px}
+.tog{width:52px; height:30px; border-radius:16px; background:rgba(255,255,255,.15); position:relative; border:none; flex:none}
+.tog::after{content:""; position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:50%; background:#fff; transition:.2s}
+.tog.on{background:var(--gold)} .tog.on::after{left:25px}
+#err{position:fixed; left:0; right:0; top:0; z-index:999; background:#c0392b; color:#fff; padding:10px 14px; font:12px/1.5 monospace; white-space:pre-wrap; display:none}
