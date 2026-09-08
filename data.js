@@ -29,14 +29,17 @@ const ILM = {
     ustoz: []
   },
 
-  /* Markaz haqida — bo'sh qoldirilgan joylar «—» bo'lib chiqadi */
+  /* Markaz haqida — @Ilmakademiyasi kanali biosidan (2026-09-09). Bo'sh joylar «—» bo'lib chiqadi */
   center: {
-    address: "",                 // masalan: "Toshkent sh., Yunusobod t., 4-mavze"
-    mapUrl: "",                  // Google/Yandex xarita havolasi
-    phone: "",                   // masalan: "+998 90 123 45 67"
-    telegram: "",                // admin username, @ siz: "ilm_admin"
-    hours: "Dushanba–Shanba · 9:00–18:00",
-    email: ""
+    phone: "+998 55 517 90 70",
+    telegram: "Ilmakademiyasi_operator",   // operator (yozish uchun), @ siz
+    channel: "Ilmakademiyasi",             // Telegram kanal, @ siz
+    hours: "Dushanba–Shanba · 9:00–18:00", // TAXMINIY — tasdiqlash kerak
+    email: "",
+    branches: [
+      { name: "1-filial · Beruniy",  address: "Beruniy ko'chasi, 35 A",  mapUrl: "https://maps.google.com/maps?q=41.348537400641,69.1950881503&z=16" },
+      { name: "2-filial · Tinchlik", address: "Farobiy ko'chasi, 393B",  mapUrl: "https://maps.google.com/maps?q=41.334638949604,69.215530411972&z=16" }
+    ]
   },
 
   /* Guruhlar — o'quvchi shu guruh KODI bilan kiradi (server kelguncha).
@@ -52,8 +55,8 @@ const ILM = {
       days: ["Du", "Ch", "Ju"], time: "18:30–20:00", start: "2026-09-01", pay: { amount: 400000, day: 10 } }
   ],
 
-  /* Bayram / dam olish kunlari — bu kunlarda dars hisoblanmaydi: ["2026-09-01", "2026-10-01"] */
-  holidays: [],
+  /* Bayram / dam olish kunlari — bu kunlarda dars hisoblanmaydi (kanal e'lonlaridan) */
+  holidays: ["2026-08-31", "2026-09-01", "2026-09-02"],
 
   /* Umumiy kirish kodi — guruhsiz kirish (darvoza). Ustoz va ustoz+ kodsiz kiradi. */
   access: {

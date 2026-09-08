@@ -729,13 +729,19 @@ function rProfile() {
 /* ---- Markaz haqida / Yo'riqnoma / Savol-javob / Yordam / Ilova haqida ---- */
 function rCenter() {
   var c = ILM.center || {}, h = top('Markaz haqida', esc(ILM.app.name), true);
+  var br = c.branches || (c.address ? [{ name: 'Manzil', address: c.address, mapUrl: c.mapUrl }] : []);
+  if (br.length) {
+    h += '<div class="card">';
+    br.forEach(function (b) { h += link('📍', esc(b.name), esc(b.address) + (b.mapUrl ? ' · xaritada ochish' : ''), b.mapUrl ? 'data-act="open" data-url="' + esc(b.mapUrl) + '"' : 'data-act="none"'); });
+    h += '</div>';
+  }
   h += '<div class="card">' +
-    link('📍', 'Manzil', c.address ? esc(c.address) : '—', c.mapUrl ? 'data-act="open" data-url="' + esc(c.mapUrl) + '"' : 'data-act="none"') +
-    link('📞', 'Telefon', c.phone ? esc(c.phone) : '—', c.phone ? 'data-act="open" data-url="tel:' + esc(c.phone.replace(/\s+/g, '')) + '"' : 'data-act="none"') +
-    link('✈️', 'Telegram', c.telegram ? '@' + esc(c.telegram) : '—', c.telegram ? 'data-act="tg" data-url="https://t.me/' + esc(c.telegram) + '"' : 'data-act="none"') +
+    link('📞', 'Telefon', c.phone ? esc(c.phone) : '—', c.phone ? 'data-act="open" data-url="tel:' + esc(c.phone.replace(/[^\d+]/g, '')) + '"' : 'data-act="none"') +
+    link('✈️', 'Operator', c.telegram ? '@' + esc(c.telegram) : '—', c.telegram ? 'data-act="tg" data-url="https://t.me/' + esc(c.telegram) + '"' : 'data-act="none"') +
+    (c.channel ? link('📣', 'Telegram kanal', '@' + esc(c.channel), 'data-act="tg" data-url="https://t.me/' + esc(c.channel) + '"') : '') +
     link('🕘', 'Ish vaqti', c.hours ? esc(c.hours) : '—', 'data-act="none"') +
     (c.email ? link('✉️', 'Email', esc(c.email), 'data-act="open" data-url="mailto:' + esc(c.email) + '"') : '') + '</div>';
-  if (!c.address && !c.phone) h += '<div class="hint" style="text-align:center">Ma\'lumotlar tez orada to\'ldiriladi</div>';
+  if (!br.length && !c.phone) h += '<div class="hint" style="text-align:center">Ma\'lumotlar tez orada to\'ldiriladi</div>';
   return h;
 }
 function rGuide() { return top('Yo\'riqnoma', 'Ilova qanday ishlaydi', true) + accordion('g', ILM.guide || []); }
@@ -745,7 +751,8 @@ function rHelp() {
   h += '<div class="card gold" style="text-align:center"><div class="t">Savol bormi?</div><div class="d">Yozing yoki qo\'ng\'iroq qiling — yordam beramiz</div></div>';
   h += '<div class="card">' +
     link('✈️', 'Telegram orqali yozish', c.telegram ? '@' + esc(c.telegram) : 'admin keyin qo\'shiladi', c.telegram ? 'data-act="tg" data-url="https://t.me/' + esc(c.telegram) + '"' : 'data-act="soon"') +
-    link('📞', 'Qo\'ng\'iroq', c.phone ? esc(c.phone) + ' · ' + esc(c.hours || '') : 'raqam keyin qo\'shiladi', c.phone ? 'data-act="open" data-url="tel:' + esc(c.phone.replace(/\s+/g, '')) + '"' : 'data-act="soon"') +
+    link('📞', 'Qo\'ng\'iroq', c.phone ? esc(c.phone) + ' · ' + esc(c.hours || '') : 'raqam keyin qo\'shiladi', c.phone ? 'data-act="open" data-url="tel:' + esc(c.phone.replace(/[^\d+]/g, '')) + '"' : 'data-act="soon"') +
+    (c.channel ? link('📣', 'Telegram kanal', 'Yangiliklar va e\'lonlar · @' + esc(c.channel), 'data-act="tg" data-url="https://t.me/' + esc(c.channel) + '"') : '') +
     link('📘', 'Yo\'riqnoma', 'Avval shu yerga qarang', 'data-go="guide"') + '</div>';
   return h;
 }
