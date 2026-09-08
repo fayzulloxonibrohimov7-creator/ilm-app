@@ -230,3 +230,67 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .inp:focus{border-color:var(--gold)}
 .inp::placeholder{color:var(--hint); font-weight:500; letter-spacing:0; text-transform:none}
 #err{position:fixed; left:0; right:0; top:0; z-index:999; background:#c0392b; color:#fff; padding:10px 14px; font:12px/1.5 monospace; white-space:pre-wrap; display:none}
+
+/* ---- joriy daraja kartasi ---- */
+.card .big small{font-size:22px; font-weight:600; margin-left:4px}
+.lvl{font-size:30px; font-weight:700; letter-spacing:-.02em; text-align:right; flex:none}
+.lvl small{font-size:14px; font-weight:600; opacity:.7}
+.path{display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-top:14px; padding-top:12px; border-top:1px solid rgba(42,33,5,.15)}
+.path span{font-size:12px; font-weight:600; padding:4px 9px; border-radius:12px; background:rgba(42,33,5,.1); color:rgba(42,33,5,.6)}
+.path span.on{background:#2A2105; color:#F4DC8A}
+.path i{font-style:normal; color:rgba(42,33,5,.4); font-size:12px}
+
+/* ---- hafta chizig'i ---- */
+.wbtn{width:36px; height:36px; border-radius:11px; border:1px solid var(--line); background:rgba(255,255,255,.08); font-size:20px; flex:none; margin-left:6px}
+.week{display:flex; justify-content:space-between; gap:4px}
+.day{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 0; border-radius:14px}
+.day span{font-size:11.5px; color:var(--hint); font-weight:600}
+.day b{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; border:1.5px solid var(--line); font-size:15px; font-weight:600}
+.day i{width:6px; height:6px; border-radius:50%; background:transparent}
+.day.les i{background:var(--gold)}
+.day.les.past i{background:var(--hint)}
+.day.on span{color:var(--gold2)}
+.day.on b{background:var(--blue-l); border-color:var(--blue-l); color:#fff; box-shadow:0 0 0 2px var(--gold)}
+.day.les b{border-color:rgba(212,175,55,.6)}
+.today{margin-top:12px; padding:12px; border-radius:14px; background:rgba(255,255,255,.06); text-align:center; font-size:14px; color:var(--text2)}
+.today.on{background:rgba(212,175,55,.16); color:var(--gold3); font-weight:600}
+.card.late{border-color:var(--red)} .card.late .kicker{color:var(--red)}
+
+/* ---- imkoniyatlar qatori ---- */
+.feat{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px}
+.feat div{display:flex; flex-direction:column; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; text-align:center}
+.feat i{width:62px; height:62px; border-radius:20px; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; font-size:26px; font-style:normal}
+.feat div:active i{transform:scale(.95)}
+
+/* ---- havola qatorlari ---- */
+.link{display:flex; align-items:center; gap:14px; padding:13px 0; border-top:1px solid var(--line); cursor:pointer}
+.link:first-child{border-top:none; padding-top:2px}
+.link:last-child{padding-bottom:2px}
+.lic{width:44px; height:44px; border-radius:13px; background:var(--card3); display:grid; place-items:center; font-size:20px; flex:none}
+.link .t{font-size:16.5px; font-weight:600}
+.link .d{font-size:13.5px; color:var(--text2); margin-top:2px}
+
+/* ---- akkordeon ---- */
+.acclist{padding:4px 18px}
+.acc{border-top:1px solid var(--line); cursor:pointer}
+.acc:first-child{border-top:none}
+.acc .q{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 0; font-weight:600; font-size:16px}
+.acc .q i{width:28px; height:28px; border-radius:50%; background:var(--card3); display:grid; place-items:center; font-style:normal; color:var(--gold2); flex:none}
+.acc.open .q{color:var(--gold2)}
+.acc .a{padding:0 0 16px; color:var(--text2); font-size:15px; line-height:1.5}
+
+/* ---- bo'sh holat ---- */
+.empty{text-align:center; padding:40px 20px 30px; color:var(--hint); font-size:14.5px; line-height:1.5}
+.empty .eic{width:76px; height:76px; border-radius:50%; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; font-size:32px; margin:0 auto 14px}
+.empty b{display:block; color:var(--text2); font-size:18px; margin-bottom:6px}
+.empty span{display:block; max-width:300px; margin:0 auto}
+
+/* ---- tanlov, natija halqasi, ilova haqida ---- */
+.sel{width:100%; height:48px; border-radius:14px; border:1px solid var(--line); background:var(--card2); color:#fff; font-size:15px; font-weight:600; padding:0 12px; font-family:inherit; outline:none}
+.ring .rin{width:122px; height:122px; border-radius:50%; display:grid; place-items:center}
+.logo{width:84px; height:84px; border-radius:26px; background:var(--g-gold); display:grid; place-items:center; font-size:40px; margin:6px auto 14px}
+.chg{padding:8px 0; border-top:1px solid var(--line); color:var(--text2); font-size:14.5px}
+.chg:first-of-type{border-top:none}
+.tabs.big{margin-bottom:10px}
+.tabs.big button.on{background:var(--g-gold); color:var(--on-gold)}
+#nav button{font-size:11.5px; padding:0 2px}
