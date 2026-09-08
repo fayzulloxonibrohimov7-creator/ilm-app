@@ -246,12 +246,6 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .remind.on{background:rgba(212,175,55,.16); border-color:rgba(212,175,55,.45); color:var(--gold3)}
 .card.late{border-color:var(--red)} .card.late .kicker{color:var(--red)}
 
-/* ---- imkoniyatlar qatori ---- */
-.feat{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px}
-.feat div{display:flex; flex-direction:column; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; text-align:center}
-.feat i{width:62px; height:62px; border-radius:20px; background:var(--card); border:1px solid var(--line); display:grid; place-items:center; font-size:26px; font-style:normal}
-.feat div:active i{transform:scale(.95)}
-
 /* ---- havola qatorlari ---- */
 .link{display:flex; align-items:center; gap:14px; padding:13px 0; border-top:1px solid var(--line); cursor:pointer}
 .link:first-child{border-top:none; padding-top:2px}

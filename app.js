@@ -276,7 +276,7 @@ function rHome() {
   /* dars eslatmasi — bitta qator */
   var rm = lessonReminder(g);
   if (rm) h += '<div class="remind ' + rm.cls + '"><i>🔔</i><span>' + rm.text + '</span></div>';
-  else if (!g && role() === 'oquvchi') h += '<div class="remind"><i>👥</i><span>Guruh hali biriktirilmagan — ustozingizga ayting</span></div>';
+  else if (!g) h += '<div class="remind"><i>👥</i><span>' + (isPlus() && !st.viewAs ? 'Guruh tanlanmagan — pastdagi Ustoz+ panelidan tanlang, dars eslatmasi shu yerda chiqadi' : 'Guruh hali biriktirilmagan — ustozingizga ayting') + '</span></div>';
 
   /* joriy daraja */
   var b = blockOf(cur), l = L(cur), left = N - done;
@@ -307,10 +307,6 @@ function rHome() {
         '<div class="d">' + money(np.amount) + ' so\'m' + (np.late ? ' · ' + fmt(np.date) + ' edi' : np.left > 0 ? ' · ' + np.left + ' kun qoldi' : '') + '</div></div><div class="cic">💳</div></div></div>';
     }
   }
-
-  /* imkoniyatlar */
-  h += '<h2 class="sec">Imkoniyatlar</h2><div class="feat">' +
-    '<div data-go="center"><i>🏫</i>Markaz</div><div data-go="guide"><i>📘</i>Yo\'riqnoma</div><div data-go="faq"><i>❔</i>Savol-javob</div><div data-go="help"><i>💬</i>Yordam</div></div>';
 
   /* yaqin imtihon */
   var nx = nextExam();
