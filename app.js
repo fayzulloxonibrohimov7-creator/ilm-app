@@ -39,7 +39,7 @@ var st = {
   testMode: false,       // sinov rejimi — qulflar o'chiq
   tab: 'home', screen: 'home', params: {}, stack: [],
   sub: { mashq: 'fon', imtihon: 'fon', imt: 'exams' },
-  run: null, weekOff: 0, acc: {}
+  run: null, acc: {}
 };
 function role() { return st.viewAs || st.role; }
 function isPlus() { return st.role === 'ustozplus'; }
@@ -135,7 +135,18 @@ function monthStats(g, ref) {
   for (var d = new Date(y, m, 1); d.getMonth() === m; d = addDays(d, 1)) if (isLessonDay(d, g)) { total++; if (d <= t) past++; }
   return { total: total, past: past };
 }
-function nextLessonDay(g) { var t = today(); for (var i = 0; i < 31; i++) { var d = addDays(t, i); if (isLessonDay(d, g)) return d; } return null; }
+function nextLessonDay(g, from) { var t = today(); for (var i = from || 0; i < 31; i++) { var d = addDays(t, i); if (isLessonDay(d, g)) return d; } return null; }
+function timeParts(s) { var m = String(s || '').match(/(\d{1,2}:\d{2})\D+(\d{1,2}:\d{2})/); return m ? { a: m[1], b: m[2] } : { a: String(s || '').trim(), b: '' }; }
+/* «Ertaga soat 18:30 da darsingiz» — bugungi dars tugagan bo'lsa keyingisini ko'rsatadi */
+function lessonReminder(g) {
+  if (!g) return null;
+  var t = today(), tp = timeParts(g.time), from = 0;
+  if (tp.b) { var now = new Date(), hm = now.getHours() * 60 + now.getMinutes(), e = tp.b.split(':'); if (hm > (+e[0]) * 60 + (+e[1])) from = 1; }
+  var nd = nextLessonDay(g, from); if (!nd) return null;
+  var diff = Math.round((nd - t) / 86400000);
+  var when = diff === 0 ? 'Bugun' : diff === 1 ? 'Ertaga' : DAYSF[nd.getDay()] + ', ' + fmt(nd);
+  return { cls: diff <= 1 ? 'on' : '', text: when + ' soat ' + esc(tp.a) + ' da darsingiz' + (diff === 0 ? ' bor' : '') };
+}
 function nextPay(g) {
   if (!g || !g.pay) return null;
   var t = today(), p = g.pay, d, late = false;
@@ -262,6 +273,11 @@ function rHome() {
     '<h1><span class="ar">أَهْلًا</span> ' + esc(first) + '</h1>' +
     '<div class="sub" style="color:var(--gold2)">' + esc(ILM.app.slogan || '') + '</div></div></div>';
 
+  /* dars eslatmasi — bitta qator */
+  var rm = lessonReminder(g);
+  if (rm) h += '<div class="remind ' + rm.cls + '"><i>🔔</i><span>' + rm.text + '</span></div>';
+  else if (!g && role() === 'oquvchi') h += '<div class="remind"><i>👥</i><span>Guruh hali biriktirilmagan — ustozingizga ayting</span></div>';
+
   /* joriy daraja */
   var b = blockOf(cur), l = L(cur), left = N - done;
   h += '<div class="card gold tap" data-tab="lessons">' +
@@ -276,20 +292,6 @@ function rHome() {
   /* kirish imtihoni taklifi — yangi o'quvchiga */
   if (role() === 'oquvchi' && !progress.placement && done === 0)
     h += '<div class="card deep tap" data-act="kirish"><div class="row"><div class="cic">🎯</div><div class="grow"><div class="t">Avval o\'qiganmisiz?</div><div class="d">Kirish imtihoni qaysi darsdan boshlashni aniqlab beradi</div></div><span class="chev">›</span></div></div>';
-
-  /* jadval — hafta chizig'i */
-  var base = addDays(t, st.weekOff * 7), mon = addDays(base, -((base.getDay() + 6) % 7));
-  h += '<div class="card weekcard"><div class="row" style="margin-bottom:10px"><div class="grow"><div class="kicker">Jadval</div><div class="t" style="font-size:17px">' + cap(MONTHS[mon.getMonth()]) + ' ' + mon.getFullYear() + '</div></div>' +
-    '<button class="wbtn" data-act="week" data-n="-1">‹</button><button class="wbtn" data-act="week" data-n="1">›</button></div><div class="week">';
-  for (var i = 0; i < 7; i++) {
-    var d = addDays(mon, i), cls = 'day' + (iso(d) === iso(t) ? ' on' : '') + (isLessonDay(d, g) ? ' les' : '') + (d < t ? ' past' : '');
-    h += '<div class="' + cls + '"><span>' + DAYS[d.getDay()] + '</span><b>' + d.getDate() + '</b><i></i></div>';
-  }
-  h += '</div>';
-  if (!g) h += '<div class="today">' + (isStaff() && !st.viewAs ? 'Guruh tanlanmagan — pastdagi Ustoz+ panelidan tanlang' : 'Guruh hali biriktirilmagan — ustozingizga ayting') + '</div>';
-  else if (isLessonDay(t, g)) h += '<div class="today on">Bugun dars · ' + esc(g.time) + ' · ' + esc(g.teacher) + '</div>';
-  else { var nd = nextLessonDay(g); h += '<div class="today">Bugun dars yo\'q' + (nd ? ' · keyingisi: ' + DAYSF[nd.getDay()] + ', ' + fmt(nd) + ' · ' + esc(g.time) : '') + '</div>'; }
-  h += '</div>';
 
   /* guruhim */
   if (g) {
@@ -831,7 +833,6 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'open') return openLink(t.dataset.url);
   if (a === 'tg') return openTg(t.dataset.url);
   if (a === 'share') { var u = 'https://t.me/' + (ILM.app.bot || ''); return openTg('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(ILM.app.name + ' — ' + ILM.app.slogan)); }
-  if (a === 'week') { st.weekOff += +t.dataset.n; return render(); }
   if (a === 'acc') { st.acc[t.dataset.k] = !st.acc[t.dataset.k]; return render(); }
   if (a === 'kirish') { st.sub.imt = 'kirish'; st.sub.imtihon = 'fon'; return setTab('imtihon'); }
   if (a === 'placement') return startRun('placement', 0);
@@ -858,15 +859,14 @@ document.getElementById('app').addEventListener('change', function (e) {
   progress.group = t.value || null; save(); toast(t.value ? 'Guruh tanlandi' : 'Guruh olib tashlandi'); render();
 });
 
-/* surish: Imtihon sahifasida tablar, Asosiy'da hafta chizig'i */
+/* surish: Imtihon sahifasida Imtihonlar ⇄ Kirish imtihoni */
 var sw = null;
 document.getElementById('view').addEventListener('touchstart', function (e) {
-  var p = e.touches[0]; sw = { x: p.clientX, y: p.clientY, week: !!e.target.closest('.weekcard') };
+  var p = e.touches[0]; sw = { x: p.clientX, y: p.clientY };
 }, { passive: true });
 document.getElementById('view').addEventListener('touchend', function (e) {
-  if (!sw) return; var p = e.changedTouches[0], dx = p.clientX - sw.x, dy = p.clientY - sw.y, w = sw; sw = null;
+  if (!sw) return; var p = e.changedTouches[0], dx = p.clientX - sw.x, dy = p.clientY - sw.y; sw = null;
   if (Math.abs(dx) < 70 || Math.abs(dy) > 60) return;
-  if (w.week && st.screen === 'home') { st.weekOff += dx < 0 ? 1 : -1; return render(); }
   if (st.screen === 'imtihon') { st.sub.imt = dx < 0 ? 'kirish' : 'exams'; return render(); }
 }, { passive: true });
 

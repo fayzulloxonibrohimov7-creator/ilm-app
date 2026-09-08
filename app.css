@@ -240,20 +240,10 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .path span.on{background:#2A2105; color:#F4DC8A}
 .path i{font-style:normal; color:rgba(42,33,5,.4); font-size:12px}
 
-/* ---- hafta chizig'i ---- */
-.wbtn{width:36px; height:36px; border-radius:11px; border:1px solid var(--line); background:rgba(255,255,255,.08); font-size:20px; flex:none; margin-left:6px}
-.week{display:flex; justify-content:space-between; gap:4px}
-.day{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; padding:6px 0; border-radius:14px}
-.day span{font-size:11.5px; color:var(--hint); font-weight:600}
-.day b{width:38px; height:38px; border-radius:50%; display:grid; place-items:center; border:1.5px solid var(--line); font-size:15px; font-weight:600}
-.day i{width:6px; height:6px; border-radius:50%; background:transparent}
-.day.les i{background:var(--gold)}
-.day.les.past i{background:var(--hint)}
-.day.on span{color:var(--gold2)}
-.day.on b{background:var(--blue-l); border-color:var(--blue-l); color:#fff; box-shadow:0 0 0 2px var(--gold)}
-.day.les b{border-color:rgba(212,175,55,.6)}
-.today{margin-top:12px; padding:12px; border-radius:14px; background:rgba(255,255,255,.06); text-align:center; font-size:14px; color:var(--text2)}
-.today.on{background:rgba(212,175,55,.16); color:var(--gold3); font-weight:600}
+/* ---- dars eslatmasi (bitta qator) ---- */
+.remind{display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.07); border:1px solid var(--line); margin-bottom:12px; font-weight:600; font-size:15px; color:var(--text2)}
+.remind i{font-style:normal; font-size:18px; flex:none}
+.remind.on{background:rgba(212,175,55,.16); border-color:rgba(212,175,55,.45); color:var(--gold3)}
 .card.late{border-color:var(--red)} .card.late .kicker{color:var(--red)}
 
 /* ---- imkoniyatlar qatori ---- */
