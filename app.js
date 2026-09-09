@@ -840,7 +840,7 @@ function rUsers() {
       '<div class="grow"><div class="t" style="font-size:17px">' + esc(u.name || '—') +
       (u.role !== 'oquvchi' ? ' <span class="pill ' + (u.role === 'ustozplus' ? 'gold' : 'blue') + '" style="margin:0">' + (u.role === 'ustozplus' ? '★ Ustoz+' : 'Ustoz') + '</span>' : '') + '</div>' +
       '<div class="d">@' + esc(u.username || '—') + ' · ID ' + u.id + '</div>' +
-      '<div class="hint">Qo\'shildi: ' + dtx(u.first_seen) + ' · Oxirgi: ' + (on ? 'online' : ago(u.last_seen)) + '</div>' +
+      '<div class="hint">Qo\'shildi: ' + dtx(u.first_seen) + ' · ' + (!u.last_seen ? 'Ilovani hali ochmagan' : 'Oxirgi: ' + (on ? 'online' : ago(u.last_seen))) + '</div>' +
       (u.placement ? '<div class="hint">Kirish imtihoni: ' + u.placement + '-darsdan</div>' : '') +
       '</div></div>' +
       '<select class="sel" style="margin-top:10px" data-act="ugroup" data-user="' + u.id + '">' +
