@@ -10,7 +10,9 @@ const ILM = {
     name: "ILM AKADEMIYASI",
     slogan: "Qadrdon ta'lim markazingiz",
     course: "Fonetika",          // hozir faqat shu kurs; Grammatika keyin
-    version: 2,
+    version: 3,
+    /* Server (Cloudflare Worker + D1). Bo'sh qoldirilsa — ilova serversiz ishlaydi. */
+    api: "https://ilm.ilm-akademiyasi.workers.dev",
     bot: "Ilmakademiyasi_bot",   // «Do'stlarga ulashish» uchun
     changelog: [
       "Asosiy ekran: joriy daraja, hafta jadvali, guruh va to'lov kartalari",

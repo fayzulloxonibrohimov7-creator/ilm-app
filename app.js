@@ -74,6 +74,40 @@ function loadCloud(cb) {
   } catch (e) { cb(); }
 }
 
+/* ---------- server (Cloudflare Worker + D1) ---------- */
+var API = String((ILM.app && ILM.app.api) || '').replace(/\/+$/, '');
+var srv = { on: false, me: null, err: null, last: 0 };
+function apiCall(route, body, cb) {
+  if (!API || !inTG || !tg.initData) { if (cb) setTimeout(function () { cb(null); }, 0); return; }
+  var d = merge({ initData: tg.initData }, body || {});
+  fetch(API + '/api/' + route, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (j && j.ok) { srv.on = true; srv.err = null; } else if (j) srv.err = j.error; if (cb) cb(j); })
+    .catch(function (e) { srv.err = 'ulanmadi'; if (cb) cb(null); });
+}
+function syncNow(first) {
+  apiCall('sync', { progress: progress, placement: (progress.placement && progress.placement.n) || null }, function (j) {
+    if (!j || !j.ok) { if (first) render(); return; }
+    srv.me = j.me; srv.last = Date.now();
+    if (j.me.role) st.role = j.me.role;                       // rol serverdan
+    if (j.me.group) progress.group = j.me.group;              // guruhni ustoz biriktiradi
+    if (j.progress && (j.updated || 0) > (progress.updated || 0)) { progress = merge(fresh(), j.progress); }
+    render();
+  });
+}
+function sendEvent(kind, ref, score, total, passed) {
+  apiCall('event', { kind: kind, ref: String(ref), score: score, total: total, passed: !!passed });
+}
+function ago(ms) {
+  if (!ms) return '—';
+  var s = Math.round((Date.now() - ms) / 1000);
+  if (s < 90) return 'hozir';
+  if (s < 3600) return Math.round(s / 60) + ' daqiqa oldin';
+  if (s < 86400) return Math.round(s / 3600) + ' soat oldin';
+  return Math.round(s / 86400) + ' kun oldin';
+}
+function dtx(ms) { if (!ms) return '—'; var d = new Date(ms); return fmt(d) + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
 /* ---------- kirish kodi (guruh kodi yoki umumiy kod) ---------- */
 var AKEY = 'ilm-access-' + user.id;
 var access = null;
@@ -122,7 +156,10 @@ function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
 
 /* ---------- guruh ---------- */
 function groupById(id) { var gs = ILM.groups || []; for (var i = 0; i < gs.length; i++) if (gs[i].id === id || gs[i].code === id) return gs[i]; return null; }
-function myGroup() { return progress.group ? groupById(progress.group) : null; }
+function myGroup() {
+  var id = (srv.me && srv.me.group) || progress.group;
+  return id ? groupById(id) : null;
+}
 function isLessonDay(d, g) {
   if (!g || !g.days) return false;
   if (g.start && d < parseISO(g.start)) return false;
@@ -330,7 +367,9 @@ function rHome() {
     h += '<div class="switch" style="display:block"><div class="k">Guruh (sinov uchun)</div><div class="v" style="margin-bottom:8px">Jadval va to\'lov kartalarini shu guruh bo\'yicha ko\'rsatadi</div>' +
       '<select class="sel" data-act="setgroup"><option value="">— guruh tanlanmagan —</option>' +
       (ILM.groups || []).map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (progress.group === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') + '</select></div>';
+    h += link('🧑‍🎓', 'Foydalanuvchilar', srv.on ? 'Kim kirdi, kim online, guruhga qo\'shish' : 'Server ulanmagan', srv.on ? 'data-go="users"' : 'data-act="srvoff"');
     h += link('👥', 'Guruhlar ro\'yxati', (ILM.groups || []).length + ' guruh · kodlari va jadvali', 'data-go="groups"');
+    h += '<div class="hint" style="margin-top:10px">Server: ' + (srv.on ? '✅ ulangan · ' + ago(srv.last) : (API ? '⚠️ ' + esc(srv.err || (inTG ? 'ulanmoqda…' : 'faqat Telegram ichida ishlaydi')) : 'sozlanmagan')) + '</div>';
     if (!st.viewAs) h += '<div class="switch"><div><div class="k">Progressni tozalash</div><div class="v">Hamma natija o\'chadi (guruh qoladi)</div></div><button class="btn sm red" data-act="reset">Tozalash</button></div>';
     h += '</div>';
   }
@@ -529,7 +568,7 @@ function rResult() {
     rec.attempts = (rec.attempts || 0) + 1;
     if (passed || !rec.passed) { rec.score = r.ok; rec.total = len; }
     rec.passed = rec.passed || passed;
-    save();
+    save(); sendEvent(r.kind, r.key, r.ok, len, passed);      // rasmiy natija serverga
   }
   var h = top(runTitle(r), '', true);
   h += ring(pct, r.ok + ' / ' + len, graded && passed) +
@@ -605,7 +644,7 @@ function rPlaceResult(r, pct) {
     pl.attempts = pl.attempts || [];
     pl.attempts.push({ n: n, date: iso(today()), ok: r.ok, total: len });
     pl.n = n; pl.date = iso(today());
-    save();
+    save(); sendEvent('placement', n, r.ok, len, true);
   }
   var full = n > N, b = full ? null : blockOf(n), l = full ? null : L(n);
   var h = top('Kirish imtihoni', 'Natija', true);
@@ -775,12 +814,52 @@ function rGroups() {
   return h;
 }
 
+/* ---- Foydalanuvchilar (ustoz / ustoz+) ---- */
+function rUsers() {
+  var h = top('Foydalanuvchilar', 'Ilovaga kirganlar', true);
+  var d = st.users;
+  if (!d) {
+    st.users = 'loading';
+    apiCall('users', null, function (j) { st.users = (j && j.ok) ? j : { err: (j && j.error) || 'ulanmadi' }; render(); });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (d === 'loading') return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (d.err) return h + empty('⚠️', 'Ro\'yxat olinmadi', esc(d.err)) + '<button class="btn ghost wide" data-act="reloadusers">Qayta urinish</button>';
+
+  h += '<div class="card blue"><div class="stats" style="margin:0;padding:0;border:none">' +
+    '<div><b>' + d.total + '</b><span>jami</span></div>' +
+    '<div><b>' + d.today + '</b><span>bugun</span></div>' +
+    '<div><b>' + d.online + '</b><span>hozir online</span></div></div></div>';
+
+  var gs = ILM.groups || [];
+  d.users.forEach(function (u) {
+    var on = (d.now - u.last_seen) < 5 * 60 * 1000;
+    var g = u.group_id ? groupById(u.group_id) : null;
+    h += '<div class="card ustd"><div class="row">' +
+      '<div class="dot ' + (on ? 'on' : '') + '"></div>' +
+      '<div class="grow"><div class="t" style="font-size:17px">' + esc(u.name || '—') +
+      (u.role !== 'oquvchi' ? ' <span class="pill ' + (u.role === 'ustozplus' ? 'gold' : 'blue') + '" style="margin:0">' + (u.role === 'ustozplus' ? '★ Ustoz+' : 'Ustoz') + '</span>' : '') + '</div>' +
+      '<div class="d">@' + esc(u.username || '—') + ' · ID ' + u.id + '</div>' +
+      '<div class="hint">Qo\'shildi: ' + dtx(u.first_seen) + ' · Oxirgi: ' + (on ? 'online' : ago(u.last_seen)) + '</div>' +
+      (u.placement ? '<div class="hint">Kirish imtihoni: ' + u.placement + '-darsdan</div>' : '') +
+      '</div></div>' +
+      '<select class="sel" style="margin-top:10px" data-act="ugroup" data-user="' + u.id + '">' +
+      '<option value="">— guruhga qo\'shilmagan —</option>' +
+      gs.map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (u.group_id === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') +
+      '</select>' +
+      (g ? '<div class="hint" style="margin-top:6px">' + esc(g.teacher) + ' · ' + esc(daysText(g)) + ' · ' + esc(g.time) + '</div>' : '') +
+      '</div>';
+  });
+  h += '<button class="btn ghost wide" data-act="reloadusers">Yangilash ↻</button>';
+  return h;
+}
+
 /* ============================================================
    RENDER va HODISALAR
    ============================================================ */
 var SCREENS = { home: rHome, lessons: rLessons, lesson: rLesson, book: rBook, video: rVideo, test: rTest, mashq: rMashq, mashqList: rMashqList, mashqBlocks: rMashqBlocks, imtihon: rImtihon,
-  profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups };
-var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1 };
+  profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups, users: rUsers };
+var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1 };
 var ICONS = {
   home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>',
   lessons: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
@@ -833,6 +912,8 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'gate') return tryGate();
   if (a === 'back') return back();
   if (a === 'soon') return toast('Tez orada qo\'shiladi');
+  if (a === 'srvoff') return toast(inTG ? 'Server ulanmadi — biroz kuting' : 'Faqat Telegram ichida ishlaydi');
+  if (a === 'reloadusers') { st.users = null; return render(); }
   if (a === 'open') return openLink(t.dataset.url);
   if (a === 'tg') return openTg(t.dataset.url);
   if (a === 'share') { var u = 'https://t.me/' + (ILM.app.bot || ''); return openTg('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(ILM.app.name + ' — ' + ILM.app.slogan)); }
@@ -858,7 +939,16 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'play') { var q = st.run && st.run.qs[st.run.i]; if (q && q.src) { try { new Audio(q.src).play(); } catch (e2) {} } else toast('Audio hali qo\'shilmagan'); return; }
 });
 document.getElementById('app').addEventListener('change', function (e) {
-  var t = e.target.closest('[data-act="setgroup"]'); if (!t) return;
+  var t = e.target.closest('[data-act="setgroup"],[data-act="ugroup"]');
+  if (!t) return;
+  if (t.dataset.act === 'ugroup') {                       // ustoz o'quvchini guruhga qo'shadi
+    var uid = +t.dataset.user, gid = t.value || null;
+    apiCall('setgroup', { user: uid, group: gid }, function (j) {
+      if (j && j.ok) { toast(gid ? 'Guruhga qo\'shildi ✓' : 'Guruhdan chiqarildi'); st.users = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+    return;
+  }
   progress.group = t.value || null; save(); toast(t.value ? 'Guruh tanlandi' : 'Guruh olib tashlandi'); render();
 });
 
@@ -882,6 +972,7 @@ function tryGate() {
 
 /* ---------- ishga tushirish ---------- */
 render();
-loadCloud(function () { render(); });
+loadCloud(function () { render(); syncNow(true); });
+setInterval(function () { if (!document.hidden) syncNow(false); }, 120000);   // har 2 daqiqada «shu yerdaman»
 
 })();

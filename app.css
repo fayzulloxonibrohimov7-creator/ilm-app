@@ -275,6 +275,12 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .logo{width:84px; height:84px; border-radius:26px; background:var(--g-gold); display:grid; place-items:center; font-size:40px; margin:6px auto 14px}
 .chg{padding:8px 0; border-top:1px solid var(--line); color:var(--text2); font-size:14.5px}
 .chg:first-of-type{border-top:none}
+/* ---- foydalanuvchilar ro'yxati ---- */
+.ustd{padding:14px 16px}
+.dot{width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.22); flex:none; margin-top:4px; align-self:flex-start}
+.dot.on{background:#3DDC84; box-shadow:0 0 0 4px rgba(61,220,132,.18)}
+.ustd .hint{font-size:12.5px; margin-top:2px}
+
 .tabs.big{margin-bottom:10px}
 .tabs.big button.on{background:var(--g-gold); color:var(--on-gold)}
 #nav button{font-size:11.5px; padding:0 2px}
