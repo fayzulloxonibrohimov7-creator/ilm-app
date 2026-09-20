@@ -26,7 +26,19 @@ body{
   -webkit-font-smoothing:antialiased; overscroll-behavior:none;
 }
 #app{max-width:480px; margin:0 auto; min-height:100vh; position:relative; background:var(--g-hero)}
-#view{padding:18px 18px calc(var(--nav) + 24px)}
+#view{padding:18px 14px calc(var(--nav) + 24px)}
+
+/* Planshet va kompyuterda kengroq ochiladi — tor ustunda o'qish noqulay */
+@media (min-width:620px){
+  #app{max-width:660px}
+  #view{padding:22px 22px calc(var(--nav) + 28px)}
+  #nav{max-width:636px}
+}
+@media (min-width:900px){
+  #app{max-width:840px}
+  #view{padding:26px 28px calc(var(--nav) + 30px)}
+  #nav{max-width:816px}
+}
 .ar{font-family:var(--ar); direction:rtl}
 button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
 a{color:var(--gold2)}
@@ -292,40 +304,64 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .lhead .lmeta{font-size:13px; color:rgba(255,255,255,.72); max-width:60%}
 
 .book{
+  --fs:1;
   position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--r);
-  padding:20px 18px; margin-bottom:14px; overflow:hidden; font-size:16px; line-height:1.55;
+  padding:18px 12px; margin-bottom:14px; overflow:hidden;
+  font-size:calc(16px * var(--fs)); line-height:1.55;
 }
-.book h3{font-size:20px; font-weight:600; color:var(--gold2); margin:22px 0 10px; line-height:1.25}
+@media (min-width:620px){ .book{padding:22px 20px} }
+.book h3{font-size:1.25em; font-weight:600; color:var(--gold2); margin:1.3em 0 .55em; line-height:1.25}
 .book h3:first-child{margin-top:0}
-.book h4{font-size:16.5px; font-weight:600; color:var(--text2); margin:18px 0 8px; letter-spacing:.02em}
-.book p{margin:10px 0}
+.book h4{font-size:1.03em; font-weight:600; color:var(--text2); margin:1.1em 0 .45em; letter-spacing:.02em}
+.book p{margin:.6em 0}
 .book b{color:#fff}
 .book i{font-style:italic; color:var(--text2)}
-.book ul{margin:10px 0; padding-right:0; padding-left:20px}
-.book li{margin:5px 0}
-.book code{background:rgba(255,255,255,.1); padding:1px 6px; border-radius:6px; font-size:14px}
-.book .ar{font-family:var(--ar); direction:rtl; text-align:right; font-size:25px; line-height:1.9}
-.book p.ar{margin:12px 0}
+.book ul{margin:.6em 0; padding-right:0; padding-left:1.2em}
+.book li{margin:.3em 0}
+.book code{background:rgba(255,255,255,.1); padding:1px 6px; border-radius:6px; font-size:.88em}
+.book .ar{font-family:var(--ar); direction:rtl; text-align:right; font-size:1.55em; line-height:1.9}
+.book p.ar{margin:.7em 0}
 
-/* jadvallar — keng bo'lsa o'zi suriladi */
-.book .tw{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:12px -4px; padding:0 4px}
-.book table{border-collapse:collapse; width:100%; min-width:max-content; font-size:14.5px}
-.book th,.book td{border:1px solid var(--line); padding:8px 10px; vertical-align:middle; text-align:center}
-.book th{background:rgba(255,255,255,.07); font-weight:600; color:var(--text2); font-size:13.5px}
-.book td.ar{font-size:21px; line-height:1.8; white-space:nowrap}
+/* jadvallar — surishga hojat qolmasin: kataklar o'zi qatorga bo'linadi */
+.book .tw{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:.7em -2px; padding:0 2px}
+.book table{border-collapse:collapse; width:100%; table-layout:auto; font-size:.86em}
+.book th,.book td{
+  border:1px solid var(--line); padding:6px 7px; vertical-align:middle; text-align:center;
+  word-break:break-word; overflow-wrap:anywhere; hyphens:auto;
+}
+.book th{background:rgba(255,255,255,.07); font-weight:600; color:var(--text2); font-size:.95em}
+.book td.ar{font-size:1.45em; line-height:1.75; white-space:normal; overflow-wrap:normal; word-break:normal}
 .book tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+@media (min-width:620px){ .book th,.book td{padding:9px 11px} }
+
+/* shrift kattaligi boshqaruvi — o'ng pastda, menyu tepasida */
+.fsctl{
+  position:fixed; right:14px; bottom:calc(var(--nav) + 22px); z-index:55; display:flex; align-items:center; gap:2px;
+  background:rgba(10,31,58,.94); backdrop-filter:blur(14px); border:1px solid var(--line);
+  border-radius:22px; padding:4px; box-shadow:0 6px 22px rgba(0,0,0,.45);
+}
+.fsctl button{
+  width:40px; height:36px; border:none; border-radius:18px; background:none; color:var(--gold2);
+  font-weight:700; line-height:1;
+}
+.fsctl button:active{background:var(--card3)}
+.fsctl button:disabled{opacity:.35}
+.fsctl .s{font-size:15px} .fsctl .l{font-size:21px}
+.fsctl b{font-size:11.5px; color:var(--text2); min-width:38px; text-align:center; font-weight:600}
+@media (min-width:620px){ .fsctl{right:calc(50% - 318px)} }
+@media (min-width:900px){ .fsctl{right:calc(50% - 408px)} }
 
 /* bet raqami, izoh */
 .book .pagemark{
-  display:flex; align-items:center; gap:10px; margin:26px 0 14px; color:var(--hint); font-size:12px; font-weight:600;
+  display:flex; align-items:center; gap:10px; margin:1.6em 0 .85em; color:var(--hint); font-size:.75em; font-weight:600;
   letter-spacing:.06em; text-transform:uppercase;
 }
 .book .pagemark::before,.book .pagemark::after{content:""; flex:1; height:1px; background:var(--line)}
 .book .note{
   background:rgba(212,175,55,.1); border-left:3px solid var(--gold); border-radius:10px;
-  padding:10px 12px; margin:12px 0; font-size:14px; color:var(--text2); line-height:1.45;
+  padding:.6em .75em; margin:.75em 0; font-size:.87em; color:var(--text2); line-height:1.45;
 }
-.book .unread{color:var(--red); font-size:12px; font-style:italic}
+.book .unread{color:var(--red); font-size:.75em; font-style:italic}
 
 /* kitobdagi ranglar — ayni tus, to'q fonda o'qilishi uchun yorug'roq */
 .book .c-r{color:#FF6B6B}            /* qizil */
@@ -340,18 +376,21 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 
 /* alifbo tasmasi */
 .book p.strip{
-  font-family:var(--ar); direction:rtl; text-align:center; font-size:22px; line-height:1.9;
+  font-family:var(--ar); direction:rtl; text-align:center; font-size:1.35em; line-height:1.9;
   background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:14px;
-  padding:10px 12px; margin:14px 0;
+  padding:.5em .6em; margin:.8em 0;
 }
 
 /* rasm / QR / husnixat joylari — rasm chizilgach shu qutilar o'rniga qo'yiladi */
 .book .imgbox,.book .qrbox,.book .writebox{
   display:inline-flex; align-items:center; gap:7px; max-width:100%; text-align:left;
   background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.22); border-radius:12px;
-  padding:7px 10px; margin:3px 0; font-size:12.5px; color:var(--hint); line-height:1.35;
+  padding:.45em .6em; margin:3px 0; font-size:.78em; color:var(--hint); line-height:1.35;
 }
-.book .imgbox i,.book .qrbox i,.book .writebox i{font-style:normal; font-size:15px; flex:none}
+.book .imgbox i,.book .qrbox i,.book .writebox i{font-style:normal; font-size:1.2em; flex:none}
+/* jadval ichida — faqat belgi, ustiga bosilsa tavsifi chiqadi */
+.book .only{padding:.3em .45em; gap:0; border-radius:10px}
+.book td .only{margin:0 auto; display:inline-flex}
 .book .writebox{border-color:rgba(212,175,55,.35); color:var(--gold2)}
 .book .qrbox{border-color:rgba(46,125,214,.45); color:#8FC2F2}
 .book .raw table{border-collapse:collapse; width:100%}

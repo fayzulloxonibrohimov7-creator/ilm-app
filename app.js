@@ -446,6 +446,27 @@ function rLesson() {
   return h;
 }
 
+/* ---- shrift kattaligi (o'quvchi o'zi tanlaydi, eslab qolinadi) ---- */
+var FSKEY = 'ilm-fs', FS = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
+try { var _fs = parseFloat(localStorage.getItem(FSKEY)); if (FS.indexOf(_fs) >= 0) st.fs = _fs; } catch (e) {}
+if (!st.fs) st.fs = 1;
+function setFS(d) {
+  var i = FS.indexOf(st.fs); if (i < 0) i = 1;
+  i = Math.max(0, Math.min(FS.length - 1, i + d));
+  if (FS[i] === st.fs) return;
+  st.fs = FS[i];
+  try { localStorage.setItem(FSKEY, st.fs); } catch (e) {}
+  toast('Shrift ' + Math.round(st.fs * 100) + '%');
+  render();
+}
+function fsctl() {
+  var i = FS.indexOf(st.fs); if (i < 0) i = 1;
+  return '<div class="fsctl">' +
+    '<button class="s" data-act="fs" data-d="-1"' + (i === 0 ? ' disabled' : '') + '>A</button>' +
+    '<b>' + Math.round(st.fs * 100) + '%</b>' +
+    '<button class="l" data-act="fs" data-d="1"' + (i === FS.length - 1 ? ' disabled' : '') + '>A</button></div>';
+}
+
 /* ---- Darslik (kitob matni serverdan) ---- */
 function lessonHead(n) {
   var l = L(n), b = blockOf(n);
@@ -475,8 +496,9 @@ function rBook() {
       '<button class="btn ghost wide" style="margin-bottom:10px" data-act="rebook">Qayta urinish</button>' +
       '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
   }
-  h += '<div class="book">' + d.html + '<div class="wm">' + wm(26) + '</div></div>';
+  h += '<div class="book" style="--fs:' + st.fs + '">' + d.html + '<div class="wm">' + wm(26) + '</div></div>';
   h += '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
+  h += fsctl();
   return h;
 }
 function wm(rows) {
@@ -935,6 +957,7 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'srvoff') return toast(inTG ? 'Server ulanmadi — biroz kuting' : 'Faqat Telegram ichida ishlaydi');
   if (a === 'reloadusers') { st.users = null; return render(); }
   if (a === 'rebook') { st.book = null; return render(); }
+  if (a === 'fs') return setFS(+t.dataset.d);
   if (a === 'open') return openLink(t.dataset.url);
   if (a === 'tg') return openTg(t.dataset.url);
   if (a === 'share') { var u = 'https://t.me/' + (ILM.app.bot || ''); return openTg('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(ILM.app.name + ' — ' + ILM.app.slogan)); }
