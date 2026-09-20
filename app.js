@@ -446,23 +446,43 @@ function rLesson() {
   return h;
 }
 
-/* ---- Darslik (betlar) ---- */
+/* ---- Darslik (kitob matni serverdan) ---- */
+function lessonHead(n) {
+  var l = L(n), b = blockOf(n);
+  return '<div class="lhead">' +
+    (l.ar ? '<div class="lar">' + esc(l.ar) + '</div>' : '') +
+    '<div class="lno">' + n + '-dars</div>' +
+    (l.uz ? '<div class="luz">' + esc(l.uz) + '</div>' : '') +
+    '<div class="lmeta">' + esc(b.title) +
+      (l.bet ? ' · kitob ' + esc(l.bet) + '-bet' : '') +
+      (l.kitobda ? ' · kitobda ' + esc(l.kitobda) : '') + '</div></div>';
+}
 function rBook() {
-  var n = +st.params.n, l = L(n);
-  var h = top('Darslik', n + '-dars', true);
-  if (!l.pages.length) {
-    h += empty('📖', 'Betlar hali qo\'shilmagan', 'Kitob tayyor bo\'lgach shu yerda darsning betlari chiqadi — har betda suv belgisi (ism · ID) bilan.');
-  } else {
-    l.pages.forEach(function (src) {
-      h += '<div class="pagewrap"><img src="' + esc(src) + '" alt=""><div class="wm">' + wm() + '</div></div>';
+  var n = +st.params.n;
+  var h = top('Darslik', n + '-dars', true) + lessonHead(n);
+  var d = st.book;
+  if (!d || d.n !== n) {
+    st.book = { n: n, loading: true };
+    apiCall('lesson', { n: n }, function (j) {
+      st.book = { n: n, html: (j && j.ok) ? j.lesson.html : null, err: (j && j.error) || 'serverga ulanmadi' };
+      render();
     });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
   }
+  if (d.loading) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (!d.html) {
+    return h + empty('📖', 'Darslik matni hali tayyor emas', esc(d.err || '')) +
+      '<button class="btn ghost wide" style="margin-bottom:10px" data-act="rebook">Qayta urinish</button>' +
+      '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
+  }
+  h += '<div class="book">' + d.html + '<div class="wm">' + wm(26) + '</div></div>';
   h += '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
   return h;
 }
-function wm() {
-  var t = esc(user.name + ' · ' + (user.id || 'sinov')), s = '';
-  for (var i = 0; i < 6; i++) for (var j = 0; j < 3; j++) s += '<span style="top:' + (i * 18 + 4) + '%;left:' + (j * 40 - 12) + '%">' + t + '</span>';
+function wm(rows) {
+  var t = esc(user.name + ' · ' + (user.id || 'sinov')), s = '', R = rows || 6;
+  for (var i = 0; i < R; i++) for (var j = 0; j < 3; j++)
+    s += '<span style="top:' + (i * (100 / R) + 1) + '%;left:' + (j * 40 - 12) + '%">' + t + '</span>';
   return s;
 }
 
@@ -914,6 +934,7 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'soon') return toast('Tez orada qo\'shiladi');
   if (a === 'srvoff') return toast(inTG ? 'Server ulanmadi — biroz kuting' : 'Faqat Telegram ichida ishlaydi');
   if (a === 'reloadusers') { st.users = null; return render(); }
+  if (a === 'rebook') { st.book = null; return render(); }
   if (a === 'open') return openLink(t.dataset.url);
   if (a === 'tg') return openTg(t.dataset.url);
   if (a === 'share') { var u = 'https://t.me/' + (ILM.app.bot || ''); return openTg('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(ILM.app.name + ' — ' + ILM.app.slogan)); }

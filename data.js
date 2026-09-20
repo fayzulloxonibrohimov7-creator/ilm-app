@@ -10,11 +10,13 @@ const ILM = {
     name: "ILM AKADEMIYASI",
     slogan: "Qadrdon ta'lim markazingiz",
     course: "Fonetika",          // hozir faqat shu kurs; Grammatika keyin
-    version: 3,
+    version: 4,
     /* Server (Cloudflare Worker + D1). Bo'sh qoldirilsa — ilova serversiz ishlaydi. */
     api: "https://ilm.ilm-akademiyasi.workers.dev",
     bot: "Ilmakademiyasi_bot",   // «Do'stlarga ulashish» uchun
     changelog: [
+      "Kitob ilovada: 60 dars, har birining nomi va kitobdagi betlari",
+      "Darslik — kitob matni, jadvallari va ranglari bilan (skan emas)",
       "Asosiy ekran: joriy daraja, hafta jadvali, guruh va to'lov kartalari",
       "Kirish imtihoni — qaysi darsdan boshlashni aniqlaydi",
       "Profil, Markaz haqida, Yo'riqnoma, Savol-javob, Yordam bo'limlari",
@@ -157,10 +159,73 @@ const ILM = {
   examQ: {}
 };
 
-/* ---- 60 ta bo'sh dars (nomlari keyin) ---- */
-for (let i = 1; i <= 60; i++) {
-  ILM.lessons.push({ n: i, ar: "", uz: "", pages: [], video: "" });
-}
+/* ---- 60 dars: nomlari va kitobdagi betlari (kitob\darslar.json dan) ----
+   Darslik matni serverdan keladi (ILM.app.api), shuning uchun bu yerda faqat nom. */
+const NOMLAR = [
+  { n: 1, ar:"", uz:"Kirish", bet:"3-4" },
+  { n: 2, ar:"", uz:"Fonetika nima?", bet:"4-5" },
+  { n: 3, ar:"", uz:"Sifatlar", bet:"5-6" },
+  { n: 4, ar:"ا", uz:"Alif harfi", bet:"6-9" },
+  { n: 5, ar:"ر", uz:"Ro harfi", bet:"9-12" },
+  { n: 6, ar:"ز", uz:"Za harfi", bet:"12-15" },
+  { n: 7, ar:"م", uz:"Mim harfi", bet:"15-18" },
+  { n: 8, ar:"ت", uz:"Ta harfi", bet:"18-22" },
+  { n: 9, ar:"ن", uz:"Nun harfi", bet:"22-26" },
+  { n:10, ar:"ي", uz:"Ya harfi", bet:"26-30" },
+  { n:11, ar:"ب", uz:"Ba harfi", bet:"30-34" },
+  { n:12, ar:"ك", uz:"Kaf harfi", bet:"34-38" },
+  { n:13, ar:"ل", uz:"Lam harfi", bet:"38-42" },
+  { n:14, ar:"و", uz:"Waw harfi", bet:"42-46" },
+  { n:15, ar:"ه", uz:"Ḥa harfi", bet:"46-50" },
+  { n:16, ar:"ف", uz:"Fa harfi", bet:"50-54" },
+  { n:17, ar:"ق", uz:"Qof harfi", bet:"54-58" },
+  { n:18, ar:"ش", uz:"Shin harfi", bet:"58-62" },
+  { n:19, ar:"س", uz:"Sin harfi", bet:"62-66" },
+  { n:20, ar:"ث", uz:"Sa̱ harfi", bet:"66-70" },
+  { n:21, ar:"ص", uz:"Ṣod harfi", bet:"70-74" },
+  { n:22, ar:"ط", uz:"Ṭo harfi", bet:"74-78" },
+  { n:23, ar:"ج", uz:"Jim harfi", bet:"78-82" },
+  { n:24, ar:"خ", uz:"Xo harfi", bet:"82-86" },
+  { n:25, ar:"ح", uz:"Ha harfi", bet:"86-90" },
+  { n:26, ar:"غ", uz:"G'oyn harfi", bet:"90-94" },
+  { n:27, ar:"ع", uz:"'Ayn harfi", bet:"94-98" },
+  { n:28, ar:"د", uz:"Dal harfi", bet:"98-102" },
+  { n:29, ar:"ض", uz:"Ḍod harfi", bet:"102-106" },
+  { n:30, ar:"ذ", uz:"Zal harfi", bet:"106-110" },
+  { n:31, ar:"ظ", uz:"Ẓo harfi", bet:"110-114" },
+  { n:32, ar:"", uz:"Mad harflari", bet:"114-119" },
+  { n:33, ar:"", uz:"Tashdidli harflar", bet:"119-123" },
+  { n:34, ar:"", uz:"Tanvinli harflar", bet:"123-125" },
+  { n:35, ar:"", uz:"Tanvinli tashdid", bet:"125-127" },
+  { n:36, ar:"", uz:"Hamza", bet:"127-129" },
+  { n:37, ar:"", uz:"Qat'iy hamzaga kursi tanlash qoidasi", bet:"129-134" },
+  { n:38, ar:"", uz:"Ta marbuta", bet:"134-135" },
+  { n:39, ar:"", uz:"Muqaddara harflar", bet:"135-136" },
+  { n:40, ar:"", uz:"Yozilsada o'qilmaydigan harflar", bet:"136-137" },
+  { n:41, ar:"", uz:"Yozilganidek o'qilmaydigan harflar: 2ta", bet:"137-138" },
+  { n:42, ar:"", uz:"Shamsiy qamariya harflar", bet:"138-140" },
+  { n:43, ar:"", uz:"Vasl", bet:"140-142" },
+  { n:44, ar:"", uz:"Vaqf", bet:"142-145" },
+  { n:45, ar:"", uz:"Sukunli nun qoidalari: 4 ta", bet:"145-149" },
+  { n:46, ar:"", uz:"Ligaturalar لا", bet:"149-153" },
+  { n:47, ar:"", uz:"Mustaqil o'qish (1-qism)", bet:"153-156", kitobda:"Mustaqil o'qish [o'qilmadi]" },
+  { n:48, ar:"", uz:"Mustaqil o'qish (2-qism)", bet:"157-160", kitobda:"Mustaqil o'qish (davomi)" },
+  { n:49, ar:"الْمُثَنَّى وَالْجَمْع", uz:"Ikkilik va ko'plik", bet:"160-166", kitobda:"1-dars" },
+  { n:50, ar:"الضَّمَائِرُ الْمُنْفَصِلَة", uz:"Munfasil zamirlar", bet:"166-169", kitobda:"2-dars" },
+  { n:51, ar:"النَّعْتُ وَالْمَنْعُوت", uz:"Sifat — na't va man'ut", bet:"169-173", kitobda:"3-dars" },
+  { n:52, ar:"الْفِعْلُ الْمَاضِي", uz:"Moziy fe'li", bet:"173-177", kitobda:"4-dars" },
+  { n:53, ar:"حُرُوفُ الْجَرّ", uz:"Harfi jarlar va maf'ul", bet:"177-181", kitobda:"5-dars" },
+  { n:54, ar:"الإِضَافَة", uz:"Izofa — muzof va muzofun ilayh", bet:"181-186", kitobda:"6-dars" },
+  { n:55, ar:"الضَّمَائِرُ الْمُتَّصِلَة", uz:"Muttasil zamirlar", bet:"186-190", kitobda:"7-dars" },
+  { n:56, ar:"الأَعْدَاد", uz:"Sonlar", bet:"190-194", kitobda:"8-dars" },
+  { n:57, ar:"الْفِعْلُ الْمُضَارِع", uz:"Muzore' fe'li", bet:"194-198", kitobda:"9-dars" },
+  { n:58, ar:"الاسْمُ الْمَوْصُول", uz:"Ismi mavsul va ranglar", bet:"198-204", kitobda:"10-dars" },
+  { n:59, ar:"فِعْلُ الأَمْر", uz:"Amr fe'li", bet:"204-211", kitobda:"11-dars" },
+  { n:60, ar:"أَبْوَابُ الْفِعْل", uz:"Fe'l boblari — 10 bob", bet:"211-213", kitobda:"12-dars" },
+];
+NOMLAR.forEach(function (d) {
+  ILM.lessons.push({ n: d.n, ar: d.ar, uz: d.uz, bet: d.bet, kitobda: d.kitobda || '', pages: [], video: "" });
+});
 
 /* ---- NAMUNA testlar (skeletni ko'rish uchun; mazmun emas) ---- */
 /* har darsda 10 ta savol */

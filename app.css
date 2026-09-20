@@ -275,6 +275,70 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .logo{width:84px; height:84px; border-radius:26px; background:var(--g-gold); display:grid; place-items:center; font-size:40px; margin:6px auto 14px}
 .chg{padding:8px 0; border-top:1px solid var(--line); color:var(--text2); font-size:14.5px}
 .chg:first-of-type{border-top:none}
+/* ============================================================
+   DARSLIK — kitob matni (serverdan keladi)
+   ============================================================ */
+.lhead{
+  position:relative; background:var(--g-blue); border:1px solid rgba(255,255,255,.12); border-radius:var(--r);
+  padding:18px 20px; margin-bottom:14px; overflow:hidden;
+}
+.lhead .lar{
+  position:absolute; right:16px; top:50%; transform:translateY(-50%); font-family:var(--ar); direction:rtl;
+  font-size:64px; line-height:1; color:var(--gold2); opacity:.9; text-shadow:0 2px 12px rgba(0,0,0,.35);
+  max-width:48%; text-align:right; pointer-events:none;
+}
+.lhead .lno{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--gold3); font-weight:700}
+.lhead .luz{font-size:23px; font-weight:600; line-height:1.15; margin:4px 0 6px; max-width:60%}
+.lhead .lmeta{font-size:13px; color:rgba(255,255,255,.72); max-width:60%}
+
+.book{
+  position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+  padding:20px 18px; margin-bottom:14px; overflow:hidden; font-size:16px; line-height:1.55;
+}
+.book h3{font-size:20px; font-weight:600; color:var(--gold2); margin:22px 0 10px; line-height:1.25}
+.book h3:first-child{margin-top:0}
+.book h4{font-size:16.5px; font-weight:600; color:var(--text2); margin:18px 0 8px; letter-spacing:.02em}
+.book p{margin:10px 0}
+.book b{color:#fff}
+.book i{font-style:italic; color:var(--text2)}
+.book ul{margin:10px 0; padding-right:0; padding-left:20px}
+.book li{margin:5px 0}
+.book code{background:rgba(255,255,255,.1); padding:1px 6px; border-radius:6px; font-size:14px}
+.book .ar{font-family:var(--ar); direction:rtl; text-align:right; font-size:25px; line-height:1.9}
+.book p.ar{margin:12px 0}
+
+/* jadvallar — keng bo'lsa o'zi suriladi */
+.book .tw{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:12px -4px; padding:0 4px}
+.book table{border-collapse:collapse; width:100%; min-width:max-content; font-size:14.5px}
+.book th,.book td{border:1px solid var(--line); padding:8px 10px; vertical-align:middle; text-align:center}
+.book th{background:rgba(255,255,255,.07); font-weight:600; color:var(--text2); font-size:13.5px}
+.book td.ar{font-size:21px; line-height:1.8; white-space:nowrap}
+.book tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+
+/* bet raqami, izoh */
+.book .pagemark{
+  display:flex; align-items:center; gap:10px; margin:26px 0 14px; color:var(--hint); font-size:12px; font-weight:600;
+  letter-spacing:.06em; text-transform:uppercase;
+}
+.book .pagemark::before,.book .pagemark::after{content:""; flex:1; height:1px; background:var(--line)}
+.book .note{
+  background:rgba(212,175,55,.1); border-left:3px solid var(--gold); border-radius:10px;
+  padding:10px 12px; margin:12px 0; font-size:14px; color:var(--text2); line-height:1.45;
+}
+.book .unread{color:var(--red); font-size:12px; font-style:italic}
+
+/* rasm / QR / husnixat joylari — rasm chizilgach shu qutilar o'rniga qo'yiladi */
+.book .imgbox,.book .qrbox,.book .writebox{
+  display:inline-flex; align-items:center; gap:7px; max-width:100%; text-align:left;
+  background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.22); border-radius:12px;
+  padding:7px 10px; margin:3px 0; font-size:12.5px; color:var(--hint); line-height:1.35;
+}
+.book .imgbox i,.book .qrbox i,.book .writebox i{font-style:normal; font-size:15px; flex:none}
+.book .writebox{border-color:rgba(212,175,55,.35); color:var(--gold2)}
+.book .qrbox{border-color:rgba(46,125,214,.45); color:#8FC2F2}
+.book .raw table{border-collapse:collapse; width:100%}
+.book .raw th,.book .raw td{border:1px solid var(--line); padding:8px 10px; text-align:center}
+
 /* ---- foydalanuvchilar ro'yxati ---- */
 .ustd{padding:14px 16px}
 .dot{width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.22); flex:none; margin-top:4px; align-self:flex-start}
