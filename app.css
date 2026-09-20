@@ -327,6 +327,24 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 }
 .book .unread{color:var(--red); font-size:12px; font-style:italic}
 
+/* kitobdagi ranglar — ayni tus, to'q fonda o'qilishi uchun yorug'roq */
+.book .c-r{color:#FF6B6B}            /* qizil */
+.book .c-b{color:#6FB6FF}            /* ko'k */
+.book .c-g{color:#63D98A}            /* yashil */
+.book .c-y{color:#F4DC8A}            /* sariq */
+.book .c-p{color:#FF9EC4}            /* pushti */
+.book .c-v{color:#C89BFF}            /* binafsha */
+.book .c-s{color:#93A9C0}            /* kulrang */
+.book .c-k{color:#FFFFFF}            /* qora → to'q fonda oq */
+.book td .c-r,.book td .c-b,.book td .c-g{font-weight:600}
+
+/* alifbo tasmasi */
+.book p.strip{
+  font-family:var(--ar); direction:rtl; text-align:center; font-size:22px; line-height:1.9;
+  background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:14px;
+  padding:10px 12px; margin:14px 0;
+}
+
 /* rasm / QR / husnixat joylari — rasm chizilgach shu qutilar o'rniga qo'yiladi */
 .book .imgbox,.book .qrbox,.book .writebox{
   display:inline-flex; align-items:center; gap:7px; max-width:100%; text-align:left;
