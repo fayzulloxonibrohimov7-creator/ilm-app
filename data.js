@@ -29,7 +29,8 @@ const ILM = {
 
   /* Rollar — Telegram ID raqamlari (Profil ekranida ko'rinadi) */
   roles: {
-    ustozplus: [8558107235],     // egasi (Fayzulloh)
+    ustozplus: [8558107235,      // egasi (Fayzulloh)
+                7116828868],     // Guzal @kh_guzall (2026-09-21)
     ustoz: []
   },
 
