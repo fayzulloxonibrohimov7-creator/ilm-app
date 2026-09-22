@@ -599,16 +599,10 @@ function rBook() {
       '<button class="btn ghost wide" style="margin-bottom:10px" data-act="rebook">Qayta urinish</button>' +
       '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
   }
-  h += '<div class="book" style="--fs:' + st.fs + '">' + d.html + '<div class="wm">' + wm(26) + '</div></div>';
+  h += '<div class="book" style="--fs:' + st.fs + '">' + d.html + '</div>';
   h += '<button class="btn gold wide" data-act="back">Darsga qaytish</button>';
   h += fsctl();
   return h;
-}
-function wm(rows) {
-  var t = esc(user.name + ' · ' + (user.id || 'sinov')), s = '', R = rows || 6;
-  for (var i = 0; i < R; i++) for (var j = 0; j < 3; j++)
-    s += '<span style="top:' + (i * (100 / R) + 1) + '%;left:' + (j * 40 - 12) + '%">' + t + '</span>';
-  return s;
 }
 
 /* ---- Video ---- */

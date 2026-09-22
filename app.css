@@ -159,17 +159,7 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .part .mark{flex:none; font-size:20px; color:var(--gold2)}
 .part.dis{opacity:.5; cursor:default}
 
-/* ---- kitob (betlar) ---- */
-.pagewrap{position:relative; background:#fff; border-radius:14px; overflow:hidden; margin-bottom:14px; box-shadow:0 6px 20px rgba(0,0,0,.4)}
-.pagewrap img{display:block; width:100%}
-.wm{
-  position:absolute; inset:0; pointer-events:none; overflow:hidden; opacity:.16;
-  background-image:repeating-linear-gradient(-30deg, transparent 0 80px, rgba(0,0,0,.001) 80px 81px);
-}
-.wm span{
-  position:absolute; white-space:nowrap; font-weight:700; font-size:18px; color:#123E73; transform:rotate(-30deg);
-  letter-spacing:.06em;
-}
+/* ---- bo'sh holat ---- */
 .placeholder{
   border:2px dashed rgba(255,255,255,.18); border-radius:var(--r); padding:34px 20px; text-align:center;
   color:var(--hint); font-size:15px; line-height:1.5;
