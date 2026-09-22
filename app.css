@@ -424,6 +424,59 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .book .raw table{border-collapse:collapse; width:100%}
 .book .raw th,.book .raw td{border:1px solid var(--line); padding:8px 10px; text-align:center}
 
+/* ---- davomat (ustoz) ---- */
+.att{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:14px; margin-bottom:8px;
+  background:rgba(255,255,255,.05); border:1px solid var(--line); cursor:pointer; transition:.12s;
+}
+.att:active{transform:scale(.99)}
+.att .box{
+  width:30px; height:30px; border-radius:9px; border:2px solid var(--line); flex:none;
+  display:grid; place-items:center; font-size:16px; font-weight:700; color:transparent;
+}
+.att .nm{flex:1; font-weight:600; font-size:15.5px}
+.att.on{background:rgba(61,220,132,.13); border-color:rgba(61,220,132,.5)}
+.att.on .box{background:#3DDC84; border-color:#3DDC84; color:#06301A}
+.att.lock{cursor:default; opacity:.85}
+
+/* dars ochish katakchalari */
+.lgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:6px; margin-top:12px}
+.lc{
+  height:38px; border-radius:11px; border:1px solid var(--line); background:rgba(255,255,255,.05);
+  color:var(--text2); font-weight:600; font-size:14px;
+}
+.lc.on{background:var(--g-gold); color:var(--on-gold); border-color:transparent}
+.lc.edge{box-shadow:0 0 0 2px var(--gold2)}
+
+/* davomat ko'rinishi (o'quvchi) */
+.dgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(34px,1fr)); gap:5px; margin:14px 0 10px}
+.dc{
+  height:32px; border-radius:9px; display:grid; place-items:center; font-size:13px; font-weight:600;
+  background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--text2);
+}
+.dc.bor{background:rgba(61,220,132,.16); border-color:rgba(61,220,132,.45); color:#8FEFB6}
+.dc.yoq{background:rgba(230,57,70,.18); border-color:rgba(230,57,70,.55); color:#FF9AA2}
+.dc.xom{box-shadow:inset 0 -3px 0 var(--gold)}
+.dleg{display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text2); margin-top:6px; line-height:1.4}
+.dleg i{width:12px; height:12px; border-radius:4px; flex:none}
+.dleg i.yoq{background:rgba(230,57,70,.7)} .dleg i.bor{background:#3DDC84} .dleg i.xom{background:var(--gold)}
+.dleg b{color:#fff}
+
+/* shakl maydonlari */
+.fld{margin-bottom:12px}
+.fld label{display:block; font-size:12.5px; color:var(--hint); font-weight:600; margin-bottom:5px}
+.inp2{
+  width:100%; height:46px; border-radius:13px; border:1px solid var(--line); background:rgba(255,255,255,.07);
+  color:#fff; font-size:15.5px; padding:0 13px; outline:none; font-family:inherit;
+}
+.inp2:focus{border-color:var(--gold)}
+.dsel{display:flex; gap:6px; flex-wrap:wrap}
+.dsel button{
+  flex:1; min-width:42px; height:42px; border-radius:12px; border:1px solid var(--line);
+  background:rgba(255,255,255,.06); color:var(--text2); font-weight:600;
+}
+.dsel button.on{background:var(--g-gold); color:var(--on-gold); border-color:transparent}
+
 /* ---- foydalanuvchilar ro'yxati ---- */
 .ustd{padding:14px 16px}
 .dot{width:12px; height:12px; border-radius:50%; background:rgba(255,255,255,.22); flex:none; margin-top:4px; align-self:flex-start}

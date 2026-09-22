@@ -89,6 +89,9 @@ function syncNow(first) {
   apiCall('sync', { progress: progress, placement: (progress.placement && progress.placement.n) || null }, function (j) {
     if (!j || !j.ok) { if (first) render(); return; }
     srv.me = j.me; srv.last = Date.now();
+    srv.grp = j.group || null;                                // guruh ma'lumoti serverdan
+    srv.openTo = j.openTo | 0;                                // ustoz shu darsgacha ochgan
+    srv.attend = j.attend || null;                            // { dars: 1/0 } — o'z davomati
     if (j.me.role) st.role = j.me.role;                       // rol serverdan
     if (j.me.group) progress.group = j.me.group;              // guruhni ustoz biriktiradi
     if (j.progress && (j.updated || 0) > (progress.updated || 0)) { progress = merge(fresh(), j.progress); }
@@ -157,9 +160,21 @@ function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
 /* ---------- guruh ---------- */
 function groupById(id) { var gs = ILM.groups || []; for (var i = 0; i < gs.length; i++) if (gs[i].id === id || gs[i].code === id) return gs[i]; return null; }
 function myGroup() {
+  if (srv.grp) return srvGroup(srv.grp);                      // serverdagi guruh ustun
   var id = (srv.me && srv.me.group) || progress.group;
   return id ? groupById(id) : null;
 }
+/* server yozuvini ilova ko'rinishiga keltiradi */
+function srvGroup(g) {
+  return {
+    id: g.id, code: g.code, name: g.name, teacher: g.teacher, room: g.room,
+    days: String(g.days || '').split(',').filter(Boolean), time: g.time, start: g.start,
+    pay: g.pay_amount ? { amount: g.pay_amount, day: g.pay_day } : null,
+    open_to: g.open_to | 0
+  };
+}
+/* ustoz shu darsgacha ochgan bo'lsa — o'quvchi undan oldinga o'ta olmaydi */
+function openLimit() { return (srv.openTo | 0) > 0 ? (srv.openTo | 0) : 0; }
 function isLessonDay(d, g) {
   if (!g || !g.days) return false;
   if (g.start && d < parseISO(g.start)) return false;
@@ -213,6 +228,8 @@ function examById(id) { for (var i = 0; i < ILM.exams.length; i++) if (ILM.exams
 function examOk(id) { return !!(progress.exams[id] && progress.exams[id].passed); }
 function unlocked(n) {
   if (allOpen()) return true;
+  var lim = openLimit();
+  if (lim && n > lim) return false;                 // ustoz hali bu darsni ochmagan
   if (n === 1) return true;
   if (!lessonOk(n - 1)) return false;
   return examsAfter(n - 1).every(function (e) { return examOk(e.id); });
@@ -326,6 +343,9 @@ function rHome() {
     '<div class="d" style="margin-top:8px">' + (done >= N ? 'Kurs tugallandi 🎉' : 'Keyingi: ' + (cur < N ? (cur + 1) + '-dars' + esc(lt(cur + 1)) : '—') + ' · oxirigacha ' + left + ' dars') + '</div>' +
     '<div class="path">' + (ILM.path || []).map(function (p, i) { return '<span class="' + (i === 0 ? 'on' : '') + '">' + esc(p) + '</span>'; }).join('<i>›</i>') + '</div></div>';
 
+  /* davomat va o'zlashtirish */
+  h += rDavomat();
+
   /* kirish imtihoni taklifi — yangi o'quvchiga */
   if (role() === 'oquvchi' && !progress.placement && done === 0)
     h += '<div class="card deep tap" data-act="kirish"><div class="row"><div class="cic">🎯</div><div class="grow"><div class="t">Avval o\'qiganmisiz?</div><div class="d">Kirish imtihoni qaysi darsdan boshlashni aniqlab beradi</div></div><span class="chev">›</span></div></div>';
@@ -375,6 +395,35 @@ function rHome() {
   }
   if (!inTG) h += '<div class="hint" style="text-align:center;margin-top:10px">Brauzerdagi sinov ko\'rinishi. Telegram ichida ochilganda haqiqiy ism va ID chiqadi.</div>';
   return h;
+}
+/* ---- Asosiy: davomat va o'zlashtirish ---- */
+function rDavomat() {
+  var lim = openLimit(), att = srv.attend;
+  if (!lim && !att) return '';                       // guruh yo'q — ko'rsatiladigan narsa yo'q
+  var oxiri = lim || currentLesson();
+  var kelgan = 0, kelmagan = [], xom = [];
+  for (var i = 1; i <= oxiri; i++) {
+    if (att && att[i] === 1) kelgan++;
+    if (att && att[i] === 0) kelmagan.push(i);
+    if (!lessonOk(i)) xom.push(i);                   // video ko'rilmagan yoki test o'tilmagan
+  }
+  var h = '<div class="card"><div class="row"><div class="grow">' +
+    '<div class="kicker">Davomat va o\'zlashtirish</div>' +
+    '<div class="t">' + oxiri + '-dars' + esc(lt(oxiri)) + '</div>' +
+    '<div class="d">' + (att ? kelgan + ' darsga kelgan' : 'Davomat hali belgilanmagan') + '</div>' +
+    '</div><div class="cic">📋</div></div><div class="dgrid">';
+  for (var k = 1; k <= oxiri; k++) {
+    var cls = 'dc';
+    if (att && att[k] === 0) cls += ' yoq';
+    else if (att && att[k] === 1) cls += ' bor';
+    if (!lessonOk(k)) cls += ' xom';
+    h += '<span class="' + cls + '">' + k + '</span>';
+  }
+  h += '</div>';
+  if (kelmagan.length) h += '<div class="dleg"><i class="yoq"></i>Kelmagan: <b>' + kelmagan.join(', ') + '</b>-dars</div>';
+  if (xom.length) h += '<div class="dleg"><i class="xom"></i>To\'liq o\'zlashtirilmagan (video yoki test qolgan): <b>' + xom.join(', ') + '</b>-dars</div>';
+  if (!kelmagan.length && !xom.length) h += '<div class="dleg"><i class="bor"></i>Hammasi joyida — qoldirilgan dars yo\'q</div>';
+  return h + '</div>';
 }
 function nextExam() {
   for (var i = 0; i < ILM.exams.length; i++) if (!examOk(ILM.exams[i].id)) return ILM.exams[i];
@@ -847,7 +896,9 @@ function rProfile() {
     '<div><b>' + accuracy() + '%</b><span>aniqlik</span></div>' +
     '<div><b>' + progress.mistakes.length + '</b><span>xato</span></div></div></div>';
   h += '<div class="card">' +
-    link('👥', 'Guruhim', g ? esc(g.name) + ' · ' + esc(daysText(g)) + ' ' + esc(g.time) : 'Hali biriktirilmagan', 'data-act="' + (g ? 'none' : 'none') + '"') +
+    (isStaff() && !st.viewAs
+      ? link('👥', 'Guruhlarim', 'Davomat · dars ochish · o\'quvchilar', 'data-go="groups"')
+      : link('👥', 'Guruhim', g ? esc(g.name) + ' · ' + esc(daysText(g)) + ' ' + esc(g.time) + (g.room ? ' · ' + esc(g.room) : '') : 'Hali biriktirilmagan', 'data-act="none"')) +
     link('🎯', 'Kirish imtihoni', progress.placement && progress.placement.n ? (progress.placement.n > N ? 'Fonetika to\'liq' : progress.placement.n + '-darsdan') + ' · ' + esc(fmt(parseISO(progress.placement.date))) : 'Topshirilmagan', 'data-act="kirish"') + '</div>';
   h += '<div class="card">' +
     link('🏫', 'Markaz haqida', '', 'data-go="center"') +
@@ -898,15 +949,103 @@ function rAbout() {
   h += '<button class="btn ghost wide" data-act="share">Do\'stlarga ulashish</button>';
   return h;
 }
+/* ---- Guruhlarim (ustoz · ustoz+) ---- */
 function rGroups() {
-  var gs = ILM.groups || [], h = top('Guruhlar', gs.length + ' guruh · data.js', true), t = today();
-  if (!gs.length) return h + empty('👥', 'Guruhlar hali yo\'q', 'Guruhlar ro\'yxati berilgach shu yerda chiqadi');
-  gs.forEach(function (g) {
-    var ms = monthStats(g, t), np = nextPay(g);
-    h += '<div class="card"><div class="row"><div class="grow"><div class="t">' + esc(g.name) + '</div><div class="d">' + esc(g.teacher) + ' · ' + esc(daysText(g)) + ' · ' + esc(g.time) + '</div></div><span class="badge gold">' + esc(g.code) + '</span></div>' +
-      '<div class="stats"><div><b>' + ms.total + '</b><span>bu oyda dars</span></div><div><b>' + ms.past + '</b><span>o\'tdi</span></div><div><b>' + (np ? fmt(np.date) : '—') + '</b><span>to\'lov' + (np ? ' · ' + money(np.amount) : '') + '</span></div></div>' +
-      '<div class="hint" style="margin-top:10px">Boshlangan: ' + (g.start ? esc(fmt(parseISO(g.start))) : '—') + ' · kod: ' + esc(g.code) + '</div></div>';
+  var h = top('Guruhlarim', 'Davomat va dars ochish', true);
+  var d = st.groups;
+  if (!d) {
+    st.groups = 'loading';
+    apiCall('mygroups', null, function (j) { st.groups = (j && j.ok) ? j : { err: (j && j.error) || 'serverga ulanmadi' }; render(); });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (d === 'loading') return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (d.err) return h + empty('⚠️', 'Ro\'yxat olinmadi', esc(d.err)) + '<button class="btn ghost wide" data-act="regroups">Qayta urinish</button>';
+  if (!d.groups.length) return h + empty('👥', 'Guruh yo\'q', isPlus() ? 'Pastdagi tugma bilan guruh qo\'shing' : 'Sizga hali guruh biriktirilmagan') +
+    (isPlus() ? '<button class="btn gold wide" data-go="grpnew">+ Guruh qo\'shish</button>' : '');
+
+  d.groups.forEach(function (g) {
+    var days = String(g.days || '').split(',').filter(Boolean).join('/');
+    h += '<div class="card blue tap" data-go="grp" data-id="' + esc(g.id) + '"><div class="row"><div class="grow">' +
+      '<div class="t">' + esc(g.name) + '</div>' +
+      '<div class="d">' + esc(days) + (g.time ? ' · soat ' + esc(g.time) : '') + (g.room ? ' · ' + esc(g.room) : '') + '</div>' +
+      '<div><span class="pill">' + (g.soni | 0) + ' o\'quvchi</span>' +
+      '<span class="pill gold">' + ((g.open_to | 0) ? '1–' + g.open_to + '-dars ochiq' : 'dars ochilmagan') + '</span></div>' +
+      '</div><span class="chev">›</span></div></div>';
   });
+  if (isPlus()) h += '<button class="btn ghost wide" data-go="grpnew">+ Guruh qo\'shish</button>';
+  return h;
+}
+
+/* ---- Guruh ichi: davomat + dars ochish ---- */
+function rGrp() {
+  var id = st.params.id, h = top('Guruh', '', true);
+  var d = st.grp;
+  if (!d || d.id !== id || d.n !== st.grpN) {
+    st.grp = { id: id, n: st.grpN, loading: true };
+    apiCall('group', { group: id, n: st.grpN || 0 }, function (j) {
+      st.grp = (j && j.ok) ? merge({ id: id, n: st.grpN }, j) : { id: id, n: st.grpN, err: (j && j.error) || 'serverga ulanmadi' };
+      if (j && j.ok && !st.grpN) { st.grpN = (j.group.open_to | 0) + 1; st.grp.n = st.grpN; st.grp.mark = {}; st.grp.saved = false; }
+      st.att = null; render();
+    });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (d.loading) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (d.err) return h + empty('⚠️', 'Ochilmadi', esc(d.err)) + '<button class="btn ghost wide" data-act="regrp">Qayta urinish</button>';
+
+  var g = d.group, days = String(g.days || '').split(',').filter(Boolean).join('/');
+  var n = st.grpN, ochiq = g.open_to | 0;
+  h = top(esc(g.name), esc(days) + (g.time ? ' · soat ' + esc(g.time) : '') + (g.room ? ' · ' + esc(g.room) : ''), true);
+
+  /* davomat */
+  var qulf = d.saved && !isPlus();
+  var mark = st.att || d.mark || {};
+  h += '<div class="card"><div class="row" style="margin-bottom:12px"><div class="grow">' +
+    '<div class="kicker">Davomat</div><div class="t">' + n + '-dars' + esc(lt(n)) + '</div></div>' +
+    '<button class="wbtn" data-act="grpn" data-d="-1">‹</button><button class="wbtn" data-act="grpn" data-d="1">›</button></div>';
+  if (!d.students.length) h += empty('👤', 'Ro\'yxat bo\'sh', 'Bu guruhga hali o\'quvchi qo\'shilmagan');
+  else {
+    d.students.forEach(function (s) {
+      var on = !!mark[s.id];
+      h += '<div class="att' + (on ? ' on' : '') + (qulf ? ' lock' : '') + '"' + (qulf ? '' : ' data-act="att" data-id="' + s.id + '"') + '>' +
+        '<span class="box">' + (on ? '✓' : '') + '</span><span class="nm">' + esc(s.name) + '</span>' +
+        (s.user_id ? '' : '<span class="hint" style="font-size:11.5px">ilovaga kirmagan</span>') + '</div>';
+    });
+    if (qulf) h += '<div class="hint" style="text-align:center;margin-top:12px">✓ Saqlangan — o\'zgartirishni Ustoz+ qiladi</div>';
+    else h += '<button class="btn gold wide" style="margin-top:12px" data-act="attsave">' + (d.saved ? 'Qayta saqlash' : 'Saqlash') + '</button>' +
+      '<div class="hint" style="text-align:center;margin-top:8px">Faqat kelganlar belgilanadi. Saqlangach o\'zgartirib bo\'lmaydi.</div>';
+  }
+  h += '</div>';
+
+  /* dars ochish */
+  h += '<div class="card"><div class="kicker">Ochiq darslar</div>' +
+    '<div class="t">' + (ochiq ? '1–' + ochiq + '-dars' : 'Hali ochilmagan') + '</div>' +
+    '<div class="d">Raqamni bosing — shu darsgacha o\'quvchilarga ochiladi. Yana bossangiz yopiladi.</div><div class="lgrid">';
+  for (var k = 1; k <= N; k++)
+    h += '<button class="lc' + (k <= ochiq ? ' on' : '') + (k === ochiq ? ' edge' : '') + '" data-act="setopen" data-n="' + k + '">' + k + '</button>';
+  h += '</div></div>';
+  return h;
+}
+
+/* ---- Guruh qo'shish (ustoz+) ---- */
+var DAYS7 = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
+function rGrpNew() {
+  var f = st.form || (st.form = { days: [] });
+  var h = top('Guruh qo\'shish', 'Ustoz+ · yangi guruh', true);
+  function fld(k, nom, ph, tur) {
+    return '<div class="fld"><label>' + nom + '</label><input class="inp2" data-f="' + k + '" value="' + esc(f[k] || '') + '" placeholder="' + esc(ph || '') + '"' + (tur ? ' type="' + tur + '"' : '') + '></div>';
+  }
+  h += '<div class="card">' +
+    fld('name', 'Guruh nomi', 'A0 Fonetika · kechki') +
+    fld('teacher', 'Ustoz (ism-familya)', 'Muhammad Aliyev') +
+    fld('teacher_id', 'Ustozning Telegram ID', '8558107235') +
+    '<div class="fld"><label>Dars kunlari</label><div class="dsel">' +
+    DAYS7.map(function (d) { return '<button class="' + (f.days.indexOf(d) >= 0 ? 'on' : '') + '" data-act="fday" data-d="' + d + '">' + d + '</button>'; }).join('') +
+    '</div></div>' +
+    fld('time', 'Vaqti', '18:30') + fld('room', 'Xona', '7-xona') +
+    fld('branch', 'Filial', 'Beruniy') + fld('start', 'Boshlangan sana', '2026-09-01') +
+    fld('pay_amount', 'To\'lov (so\'m)', '400000') + fld('pay_day', 'To\'lov kuni', '5') +
+    fld('code', 'Kirish kodi', 'ILM-A0-1') +
+    '</div><button class="btn gold wide" data-act="grpsave">Saqlash</button>';
   return h;
 }
 
@@ -954,8 +1093,9 @@ function rUsers() {
    RENDER va HODISALAR
    ============================================================ */
 var SCREENS = { home: rHome, lessons: rLessons, lesson: rLesson, book: rBook, video: rVideo, test: rTest, mashq: rMashq, mashqList: rMashqList, mashqBlocks: rMashqBlocks, imtihon: rImtihon,
-  profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups, users: rUsers };
-var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1 };
+  profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups, users: rUsers,
+  grp: rGrp, grpnew: rGrpNew };
+var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1, grpnew: 1 };
 var ICONS = {
   home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>',
   lessons: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
@@ -990,6 +1130,8 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (t.dataset.sub) { var p = t.dataset.sub.split(':'); st.sub[p[0]] = p[1]; return render(); }
   if (t.dataset.go) {
     var g = t.dataset.go, n = +t.dataset.n;
+    if (g === 'grp') { st.grpN = 0; st.grp = null; st.att = null; return go('grp', { id: t.dataset.id }); }
+    if (g === 'grpnew') { st.form = { days: [] }; return go('grpnew'); }
     if (SIMPLE[g]) return go(g);
     if (g === 'lesson') {
       if (n < 1 || n > N) return;
@@ -1011,6 +1153,50 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'soon') return toast('Tez orada qo\'shiladi');
   if (a === 'srvoff') return toast(inTG ? 'Server ulanmadi — biroz kuting' : 'Faqat Telegram ichida ishlaydi');
   if (a === 'reloadusers') { st.users = null; return render(); }
+  if (a === 'regroups') { st.groups = null; return render(); }
+  if (a === 'regrp') { st.grp = null; return render(); }
+  if (a === 'grpn') {                                     // davomat uchun dars raqamini almashtirish
+    var nn = (st.grpN || 1) + (+t.dataset.d);
+    if (nn < 1 || nn > N) return;
+    st.grpN = nn; st.grp = null; st.att = null; return render();
+  }
+  if (a === 'att') {                                      // «keldi» belgisini qo'yish/olib tashlash
+    var sid = +t.dataset.id;
+    if (!st.att) { st.att = {}; var m0 = (st.grp && st.grp.mark) || {}; for (var k0 in m0) st.att[k0] = m0[k0]; }
+    st.att[sid] = st.att[sid] ? 0 : 1; return render();
+  }
+  if (a === 'attsave') {
+    var mm = st.att || (st.grp && st.grp.mark) || {}, kel = [];
+    for (var k1 in mm) if (mm[k1]) kel.push(+k1);
+    return apiCall('attend', { group: st.grp.id, n: st.grpN, present: kel }, function (j) {
+      if (j && j.ok) { toast('Davomat saqlandi ✓ · 1–' + j.open_to + '-dars ochiq'); st.grp = null; st.groups = null; st.att = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'setopen') {
+    var kk = +t.dataset.n, cur = (st.grp && st.grp.group.open_to | 0);
+    return apiCall('setopen', { group: st.grp.id, to: kk === cur ? kk - 1 : kk }, function (j) {
+      if (j && j.ok) { toast(j.open_to ? '1–' + j.open_to + '-dars ochiq' : 'Darslar yopildi'); st.grp = null; st.groups = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'fday') {
+    var dd = t.dataset.d, arr = st.form.days, ix = arr.indexOf(dd);
+    if (ix >= 0) arr.splice(ix, 1); else arr.push(dd);
+    return render();
+  }
+  if (a === 'grpsave') {
+    var f = st.form;
+    if (!f.name) return toast('Guruh nomini yozing');
+    return apiCall('savegroup2', { group: {
+      name: f.name, teacher: f.teacher || '', teacher_id: +(f.teacher_id || 0), days: f.days,
+      time: f.time || '', room: f.room || '', branch: f.branch || '', start: f.start || '',
+      pay_amount: +(f.pay_amount || 0), pay_day: +(f.pay_day || 0), code: f.code || ''
+    } }, function (j) {
+      if (j && j.ok) { toast('Guruh qo\'shildi ✓'); st.groups = null; st.form = { days: [] }; back(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
   if (a === 'rebook') { st.book = null; return render(); }
   if (a === 'fs') return setFS(+t.dataset.d);
   if (a === 'playvid') {
@@ -1042,6 +1228,10 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'retry') { if (!st.run) return; return startRun(st.run.kind, st.run.key, true); }
   if (a === 'vidseen') { markVideo(+t.dataset.n); toast('Belgilandi ✓'); return render(); }
   if (a === 'play') { var q = st.run && st.run.qs[st.run.i]; if (q && q.src) { try { new Audio(q.src).play(); } catch (e2) {} } else toast('Audio hali qo\'shilmagan'); return; }
+});
+document.getElementById('app').addEventListener('input', function (e) {
+  var t = e.target.closest('[data-f]'); if (!t) return;
+  (st.form = st.form || { days: [] })[t.dataset.f] = t.value;          // guruh shakli maydonlari
 });
 document.getElementById('app').addEventListener('change', function (e) {
   var t = e.target.closest('[data-act="setgroup"],[data-act="ugroup"]');
