@@ -363,6 +363,34 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 }
 .book .unread{color:var(--red); font-size:.75em; font-style:italic}
 
+/* matn ichidagi video — kitobda QR kod turgan joyda */
+.book .vidbox{
+  display:block; margin:.9em 0; border-radius:14px; overflow:hidden;
+  border:1px solid rgba(212,175,55,.4); background:rgba(212,175,55,.09);
+}
+.book .vidbox .play{
+  display:flex; align-items:center; gap:10px; width:100%; padding:.6em .7em;
+  background:none; border:none; color:var(--gold2); font-weight:600; font-size:.92em; text-align:left;
+}
+.book .vidbox .play i{
+  width:32px; height:32px; border-radius:50%; background:var(--g-gold); color:var(--on-gold);
+  display:grid; place-items:center; font-style:normal; font-size:13px; flex:none; padding-left:2px;
+}
+.book .vidbox .ext{
+  display:block; padding:0 .8em .6em 3.3em; font-size:.75em; color:var(--hint); text-decoration:none;
+}
+.book .vidbox.tg{border-color:rgba(46,125,214,.45); background:rgba(46,125,214,.1)}
+.book .vidbox.tg .play{color:#8FC2F2}
+.book .vidbox.tg .play i{background:var(--blue-l); color:#fff}
+.book .vidbox.on{background:#000; border-color:rgba(255,255,255,.14)}
+.book .vidbox .slot{display:block; position:relative; width:100%; aspect-ratio:16/9; background:#000}
+.book .vidbox .slot iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+.book .vidbox .vfoot{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:.5em .8em; font-size:.78em; color:var(--text2); background:rgba(212,175,55,.09);
+}
+.book .vidbox .vfoot a{color:var(--gold2); text-decoration:none}
+
 /* kitobdagi ranglar — ayni tus, to'q fonda o'qilishi uchun yorug'roq */
 .book .c-r{color:#FF6B6B}            /* qizil */
 .book .c-b{color:#6FB6FF}            /* ko'k */

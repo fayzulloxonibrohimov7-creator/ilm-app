@@ -446,6 +446,60 @@ function rLesson() {
   return h;
 }
 
+/* ---- matn ichidagi videolar (kitobdagi QR kod turgan joylarda) ---- */
+st.vids = {};                                   // shu safar ochilganlari
+function seenVid(key) {
+  progress.vids = progress.vids || {};
+  if (progress.vids[key]) return;
+  progress.vids[key] = Date.now(); save();
+  toast('Video ko\'rildi ✓'); paintVids();
+}
+function paintVids() {
+  var list = document.querySelectorAll('#view .vidbox');
+  for (var i = 0; i < list.length; i++) {
+    var b = list[i], id = b.getAttribute('data-yt') || '', url = b.getAttribute('data-url') || '';
+    var label = b.getAttribute('data-label') || 'Videoni ko\'rish';
+    var seen = (progress.vids || {})[id || url];
+    if (id && st.vids[id]) {
+      if (b.classList.contains('on')) continue;          // allaqachon ochilgan — tegmaymiz
+      b.classList.add('on');
+      b.innerHTML = '<span class="slot"><span id="ytp-' + esc(id) + '"></span></span>' +
+        '<span class="vfoot"><span>' + esc(label) + (seen ? ' ✓' : '') + '</span>' +
+        '<a href="https://youtu.be/' + esc(id) + '" target="_blank" rel="noopener">YouTube ↗</a></span>';
+    } else if (!b.classList.contains('on')) {
+      b.innerHTML = '<button class="play" data-act="playvid" data-id="' + esc(id) + '" data-url="' + esc(url) + '">' +
+        '<i>' + (url ? '✈' : '▶') + '</i><span>' + esc(label) + (seen ? ' ✓' : '') + '</span></button>' +
+        (id ? '<a class="ext" href="https://youtu.be/' + esc(id) + '" target="_blank" rel="noopener">YouTube ↗</a>' : '');
+    }
+  }
+  mountVids();
+}
+function mountVids() {
+  var boxes = document.querySelectorAll('#view .vidbox.on[data-yt]'), need = [];
+  for (var i = 0; i < boxes.length; i++) if (!boxes[i]._on) need.push(boxes[i]);
+  if (!need.length) return;
+  var make = function () {
+    need.forEach(function (b) {
+      if (b._on) return;
+      var id = b.getAttribute('data-yt'), slot = document.getElementById('ytp-' + id);
+      if (!slot) return;
+      b._on = true;
+      try {
+        new YT.Player(slot, {
+          videoId: id, playerVars: { rel: 0, modestbranding: 1, playsinline: 1, autoplay: 1 },
+          events: { onStateChange: function (e) { if (e.data === YT.PlayerState.ENDED) seenVid(id); } }
+        });
+      } catch (e) { b._on = false; }
+    });
+  };
+  if (window.YT && window.YT.Player) return make();
+  window.onYouTubeIframeAPIReady = make;
+  if (!document.getElementById('ytapi')) {
+    var s = document.createElement('script'); s.id = 'ytapi'; s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  }
+}
+
 /* ---- shrift kattaligi (o'quvchi o'zi tanlaydi, eslab qolinadi) ---- */
 var FSKEY = 'ilm-fs', FS = [0.85, 1, 1.15, 1.3, 1.5, 1.75];
 try { var _fs = parseFloat(localStorage.getItem(FSKEY)); if (FS.indexOf(_fs) >= 0) st.fs = _fs; } catch (e) {}
@@ -924,6 +978,7 @@ function render() {
     return '<button class="' + (st.tab === t[0] ? 'on' : '') + '" data-tab="' + t[0] + '"><i>' + ICONS[t[0]] + '</i>' + t[1] + '</button>';
   }).join('');
   if (st.screen === 'video') { var l = L(+st.params.n), id = ytId(l.video); if (id) loadYT(id, +st.params.n); }
+  if (st.screen === 'book') paintVids();
   if (tg && tg.BackButton) { try { if (st.stack.length) tg.BackButton.show(); else tg.BackButton.hide(); } catch (e) {} }
 }
 if (tg && tg.BackButton) { try { tg.BackButton.onClick(back); } catch (e) {} }
@@ -958,6 +1013,12 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'reloadusers') { st.users = null; return render(); }
   if (a === 'rebook') { st.book = null; return render(); }
   if (a === 'fs') return setFS(+t.dataset.d);
+  if (a === 'playvid') {
+    var vu = t.dataset.url, vi = t.dataset.id;
+    if (vu) { seenVid(vu); return /^https:\/\/t\.me\//.test(vu) ? openTg(vu) : openLink(vu); }
+    if (vi) { st.vids[vi] = 1; paintVids(); }
+    return;
+  }
   if (a === 'open') return openLink(t.dataset.url);
   if (a === 'tg') return openTg(t.dataset.url);
   if (a === 'share') { var u = 'https://t.me/' + (ILM.app.bot || ''); return openTg('https://t.me/share/url?url=' + encodeURIComponent(u) + '&text=' + encodeURIComponent(ILM.app.name + ' — ' + ILM.app.slogan)); }
