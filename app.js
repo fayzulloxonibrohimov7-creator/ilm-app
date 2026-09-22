@@ -158,7 +158,13 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function money(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
 
 /* ---------- guruh ---------- */
-function groupById(id) { var gs = ILM.groups || []; for (var i = 0; i < gs.length; i++) if (gs[i].id === id || gs[i].code === id) return gs[i]; return null; }
+function groupById(id) {
+  var sg = srv.glist || [];
+  for (var k = 0; k < sg.length; k++) if (sg[k].id === id) return srvGroup(sg[k]);
+  var gs = ILM.groups || [];
+  for (var i = 0; i < gs.length; i++) if (gs[i].id === id || gs[i].code === id) return gs[i];
+  return null;
+}
 function myGroup() {
   if (srv.grp) return srvGroup(srv.grp);                      // serverdagi guruh ustun
   var id = (srv.me && srv.me.group) || progress.group;
@@ -1060,7 +1066,8 @@ function rUsers() {
     '<div><b>' + d.today + '</b><span>bugun</span></div>' +
     '<div><b>' + d.online + '</b><span>hozir online</span></div></div></div>';
 
-  var gs = ILM.groups || [];
+  var gs = (d.groups && d.groups.length) ? d.groups : (ILM.groups || []);   // serverdagi guruhlar
+  srv.glist = d.groups || null;
   d.users.forEach(function (u) {
     var on = (d.now - u.last_seen) < 5 * 60 * 1000;
     var g = u.group_id ? groupById(u.group_id) : null;
