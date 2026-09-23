@@ -414,6 +414,21 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .book .raw table{border-collapse:collapse; width:100%}
 .book .raw th,.book .raw td{border:1px solid var(--line); padding:8px 10px; text-align:center}
 
+/* ---- tanlangan guruh: tahrirlash / o'chirish ---- */
+.selbar{
+  display:flex; align-items:center; gap:8px; padding:12px 14px; margin-bottom:12px; border-radius:var(--r);
+  background:var(--card3); border:1px solid rgba(212,175,55,.5); box-shadow:0 4px 18px rgba(0,0,0,.35);
+}
+.selbar .t{font-size:15.5px; font-weight:600; line-height:1.25}
+.selbar .kicker{font-size:11px}
+.sb{
+  width:44px; height:44px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.08);
+  font-size:19px; flex:none; display:grid; place-items:center;
+}
+.sb:active{transform:scale(.94)}
+.sb.red{background:rgba(230,57,70,.2); border-color:rgba(230,57,70,.6)}
+.card.sel{box-shadow:0 0 0 2px var(--gold); border-color:var(--gold)}
+
 /* ---- davomat (ustoz) ---- */
 .att{
   display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:14px; margin-bottom:8px;

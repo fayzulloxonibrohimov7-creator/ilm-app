@@ -963,16 +963,27 @@ function rGroups() {
   if (!d.groups.length) return h + empty('👥', 'Guruh yo\'q', isPlus() ? 'Pastdagi tugma bilan guruh qo\'shing' : 'Sizga hali guruh biriktirilmagan') +
     (isPlus() ? '<button class="btn gold wide" data-go="grpnew">+ Guruh qo\'shish</button>' : '');
 
+  /* uzoq bosilganda — o'chirish va tahrirlash (faqat ustoz+) */
+  if (st.gsel && isPlus()) {
+    var sg = null;
+    d.groups.forEach(function (x) { if (x.id === st.gsel) sg = x; });
+    if (sg) h += '<div class="selbar"><div class="grow"><div class="kicker">Tanlandi</div><div class="t">' + esc(sg.name) + '</div></div>' +
+      '<button class="sb" data-act="gedit" data-id="' + esc(sg.id) + '" title="Tahrirlash">✏️</button>' +
+      '<button class="sb red" data-act="gdel" data-id="' + esc(sg.id) + '" title="O\'chirish">🗑️</button>' +
+      '<button class="sb" data-act="gselx" title="Bekor qilish">✕</button></div>';
+  }
+
   d.groups.forEach(function (g) {
     var days = String(g.days || '').split(',').filter(Boolean).join('/');
-    h += '<div class="card blue tap" data-go="grp" data-id="' + esc(g.id) + '"><div class="row"><div class="grow">' +
+    h += '<div class="card blue tap' + (st.gsel === g.id ? ' sel' : '') + '" data-go="grp" data-id="' + esc(g.id) + '"><div class="row"><div class="grow">' +
       '<div class="t">' + esc(g.name) + '</div>' +
       '<div class="d">' + esc(days) + (g.time ? ' · soat ' + esc(g.time) : '') + (g.room ? ' · ' + esc(g.room) : '') + '</div>' +
       '<div><span class="pill">' + (g.soni | 0) + ' o\'quvchi</span>' +
       '<span class="pill gold">' + ((g.open_to | 0) ? '1–' + g.open_to + '-dars ochiq' : 'dars ochilmagan') + '</span></div>' +
       '</div><span class="chev">›</span></div></div>';
   });
-  if (isPlus()) h += '<button class="btn ghost wide" data-go="grpnew">+ Guruh qo\'shish</button>';
+  if (isPlus()) h += '<button class="btn ghost wide" data-go="grpnew">+ Guruh qo\'shish</button>' +
+    '<div class="hint" style="text-align:center;margin-top:10px">Guruhni uzoq bosib turing — tahrirlash va o\'chirish chiqadi</div>';
   return h;
 }
 
@@ -1030,7 +1041,7 @@ function rGrp() {
 var DAYS7 = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
 function rGrpNew() {
   var f = st.form || (st.form = { days: [] });
-  var h = top('Guruh qo\'shish', 'Ustoz+ · yangi guruh', true);
+  var h = top(f.id ? 'Guruhni tahrirlash' : 'Guruh qo\'shish', f.id ? esc(f.name || '') : 'Ustoz+ · yangi guruh', true);
   function fld(k, nom, ph, tur) {
     return '<div class="fld"><label>' + nom + '</label><input class="inp2" data-f="' + k + '" value="' + esc(f[k] || '') + '" placeholder="' + esc(ph || '') + '"' + (tur ? ' type="' + tur + '"' : '') + '></div>';
   }
@@ -1131,7 +1142,11 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (t.dataset.sub) { var p = t.dataset.sub.split(':'); st.sub[p[0]] = p[1]; return render(); }
   if (t.dataset.go) {
     var g = t.dataset.go, n = +t.dataset.n;
-    if (g === 'grp') { st.grpN = 0; st.grp = null; st.att = null; return go('grp', { id: t.dataset.id }); }
+    if (g === 'grp') {
+      if (st.lp) { st.lp = 0; return; }                   // uzoq bosishdan keyingi bosish hisoblanmasin
+      st.gsel = null; st.grpN = 0; st.grp = null; st.att = null;
+      return go('grp', { id: t.dataset.id });
+    }
     if (g === 'grpnew') { st.form = { days: [] }; return go('grpnew'); }
     if (SIMPLE[g]) return go(g);
     if (g === 'lesson') {
@@ -1186,15 +1201,36 @@ document.getElementById('app').addEventListener('click', function (e) {
     if (ix >= 0) arr.splice(ix, 1); else arr.push(dd);
     return render();
   }
+  if (a === 'gselx') { st.gsel = null; return render(); }
+  if (a === 'gedit') {                                    // tanlangan guruhni tahrirlashga ochish
+    var gd = null, lst = (st.groups && st.groups.groups) || [];
+    lst.forEach(function (x) { if (x.id === t.dataset.id) gd = x; });
+    if (!gd) return;
+    st.form = {
+      id: gd.id, name: gd.name || '', teacher: gd.teacher || '', teacher_id: gd.teacher_id || '',
+      days: String(gd.days || '').split(',').filter(Boolean), time: gd.time || '', room: gd.room || '',
+      branch: gd.branch || '', start: gd.start || '', pay_amount: gd.pay_amount || '',
+      pay_day: gd.pay_day || '', code: gd.code || ''
+    };
+    st.gsel = null; return go('grpnew');
+  }
+  if (a === 'gdel') {
+    var gid2 = t.dataset.id;
+    if (!confirm('Guruh o\'chirilsinmi? O\'quvchilar va davomat saqlanib qoladi, guruh ro\'yxatdan yo\'qoladi.')) return;
+    return apiCall('delgroup', { group: gid2 }, function (j) {
+      if (j && j.ok) { toast('Guruh o\'chirildi'); st.gsel = null; st.groups = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
   if (a === 'grpsave') {
     var f = st.form;
     if (!f.name) return toast('Guruh nomini yozing');
     return apiCall('savegroup2', { group: {
-      name: f.name, teacher: f.teacher || '', teacher_id: +(f.teacher_id || 0), days: f.days,
+      id: f.id || '', name: f.name, teacher: f.teacher || '', teacher_id: +(f.teacher_id || 0), days: f.days,
       time: f.time || '', room: f.room || '', branch: f.branch || '', start: f.start || '',
       pay_amount: +(f.pay_amount || 0), pay_day: +(f.pay_day || 0), code: f.code || ''
     } }, function (j) {
-      if (j && j.ok) { toast('Guruh qo\'shildi ✓'); st.groups = null; st.form = { days: [] }; back(); }
+      if (j && j.ok) { toast(f.id ? 'Saqlandi ✓' : 'Guruh qo\'shildi ✓'); st.groups = null; st.form = { days: [] }; back(); }
       else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
     });
   }
@@ -1246,6 +1282,31 @@ document.getElementById('app').addEventListener('change', function (e) {
     return;
   }
   progress.group = t.value || null; save(); toast(t.value ? 'Guruh tanlandi' : 'Guruh olib tashlandi'); render();
+});
+
+/* uzoq bosish: guruh kartasini tanlash (ustoz+ — tahrirlash/o'chirish uchun) */
+var lpT = null;
+function lpBoshla(el) {
+  if (!isPlus() || !el) return;
+  lpT = setTimeout(function () {
+    lpT = null; st.lp = 1; st.gsel = el.getAttribute('data-id');
+    try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) {}
+    render();
+  }, 480);
+}
+function lpBekor() { if (lpT) { clearTimeout(lpT); lpT = null; } }
+['touchstart', 'mousedown'].forEach(function (ev) {
+  document.getElementById('view').addEventListener(ev, function (e) {
+    if (st.screen !== 'groups') return;
+    lpBoshla(e.target.closest('[data-go="grp"]'));
+  }, { passive: true });
+});
+['touchend', 'touchmove', 'touchcancel', 'mouseup', 'mouseleave', 'scroll'].forEach(function (ev) {
+  document.getElementById('view').addEventListener(ev, lpBekor, { passive: true });
+});
+document.getElementById('view').addEventListener('contextmenu', function (e) {
+  var c = e.target.closest('[data-go="grp"]');
+  if (c && isPlus() && st.screen === 'groups') { e.preventDefault(); st.gsel = c.getAttribute('data-id'); render(); }
 });
 
 /* surish: Imtihon sahifasida Imtihonlar ⇄ Kirish imtihoni */
