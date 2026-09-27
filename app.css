@@ -400,6 +400,14 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 }
 
 /* rasm / QR / husnixat joylari — rasm chizilgach shu qutilar o'rniga qo'yiladi */
+/* haqiqiy chizma (maxraj va h.k.) — matn ichida, o'rtada, o'zining ranglari bilan */
+.book .imgw{
+  max-width:260px; margin:.9em auto; padding:10px 6px 6px;
+  background:rgba(255,255,255,.045); border:1px solid var(--line); border-radius:16px;
+}
+.book .imgw svg{display:block; width:100%; height:auto}
+.book .imgw.imgw-lg{max-width:100%; padding:12px 10px; background:rgba(255,255,255,.03)}
+
 .book .imgbox,.book .qrbox,.book .writebox{
   display:inline-flex; align-items:center; gap:7px; max-width:100%; text-align:left;
   background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.22); border-radius:12px;
