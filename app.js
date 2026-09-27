@@ -715,6 +715,13 @@ function rStudentCard() {
     '<div><b>' + acc + '%</b><span>aniqlik</span></div>' +
     '<div><b>' + (p.mistakes ? p.mistakes.length : 0) + '</b><span>xato</span></div></div></div>';
 
+  h += '<div class="card">' + (st.stedit
+    ? '<div class="fld"><label>Ism-familya</label><input class="inp2" data-f="editname" value="' + esc((st.form && st.form.editname != null) ? st.form.editname : s.name) + '"></div>' +
+      '<div class="fld"><label>Telefon</label><input class="inp2" data-f="editphone" value="' + esc(((st.form && st.form.editphone != null) ? st.form.editphone : (s.phone || ''))) + '"></div>' +
+      '<div class="fld"><label>Telegram ID (bog\'lash uchun, ixtiyoriy)</label><input class="inp2" data-f="edituid" value="' + esc(((st.form && st.form.edituid != null) ? st.form.edituid : (s.user_id || ''))) + '" inputmode="numeric"></div>' +
+      '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="stsave" data-id="' + s.id + '">Saqlash</button><button class="btn sm ghost" data-act="steditx">Bekor qilish</button></div>'
+    : '<div class="row" style="gap:8px"><button class="btn sm ghost" data-act="stedit">✏️ Tahrirlash</button><button class="btn sm red" data-act="stdel" data-id="' + s.id + '">🗑️ O\'chirish</button></div>') + '</div>';
+
   if (st.scard.attendance && st.scard.attendance.length) {
     h += '<div class="card"><div class="kicker">Davomat</div><div class="dgrid" style="margin-top:10px">';
     st.scard.attendance.forEach(function (a) { h += '<span class="dc ' + (a.present ? 'bor' : 'yoq') + '">' + a.n + '</span>'; });
@@ -1355,9 +1362,25 @@ function rGrp() {
     h += '<button class="lc' + (k <= ochiq ? ' on' : '') + (k === ochiq ? ' edge' : '') + '" data-act="setopen" data-n="' + k + '">' + k + '</button>';
   h += '</div></div>';
 
+  h += rGrpRoster(g.id, d.students);
   h += rGrpHomework(g.id);
   h += '<button class="btn ghost wide" data-go="rating" data-gid="' + esc(g.id) + '">🏆 Guruh reytingi</button>';
   return h;
+}
+
+/* ---- O'quvchilar ro'yxati: qo'shish (guruh ichida) ---- */
+function rGrpRoster(gid, students) {
+  var h = '<div class="card"><div class="kicker">O\'quvchilar ro\'yxati</div><div class="t">' + students.length + ' o\'quvchi</div>' +
+    '<div class="d">Tahrirlash yoki o\'chirish uchun ism ustidagi ℹ️ ni bosing</div>';
+  if (st.stadd && st.stadd.gid === gid) {
+    h += '<div class="fld" style="margin-top:12px"><label>Ism-familya</label><input class="inp2" data-f="stname" value="' + esc((st.form && st.form.stname) || '') + '" placeholder="Ali Valiyev"></div>' +
+      '<div class="fld"><label>Telefon (ixtiyoriy)</label><input class="inp2" data-f="stphone" value="' + esc((st.form && st.form.stphone) || '') + '" placeholder="+998 90 123 45 67"></div>' +
+      '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="stadd" data-gid="' + esc(gid) + '">Qo\'shish</button>' +
+      '<button class="btn sm ghost" data-act="staddx">Bekor qilish</button></div>';
+  } else {
+    h += '<button class="btn ghost wide" style="margin-top:12px" data-act="staddopen" data-gid="' + esc(gid) + '">+ O\'quvchi qo\'shish</button>';
+  }
+  return h + '</div>';
 }
 
 /* ---- Guruh qo'shish (ustoz+) ---- */
@@ -1431,6 +1454,12 @@ function rUsers() {
       gs.map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (u.group_id === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') +
       '</select>' +
       (g ? '<div class="hint" style="margin-top:6px">' + esc(g.teacher) + ' · ' + esc(daysText(g)) + ' · ' + esc(g.time) + '</div>' : '') +
+      (isPlus() && u.id !== user.id
+        ? '<div class="dsel" style="margin-top:10px">' +
+          ['oquvchi', 'ustoz', 'ustozplus'].map(function (r) {
+            var nom = r === 'oquvchi' ? 'O\'quvchi' : r === 'ustoz' ? 'Ustoz' : 'Ustoz+';
+            return '<button class="' + (u.role === r ? 'on' : '') + '" data-act="urole" data-user="' + u.id + '" data-r="' + r + '">' + nom + '</button>';
+          }).join('') + '</div>' : '') +
       '</div>';
   });
   h += '<button class="btn ghost wide" data-act="reloadusers">Yangilash ↻</button>';
@@ -1675,6 +1704,53 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'sendrem') {
     return apiCall('sendreminders', { force: false }, function (j) {
       if (j && j.ok) toast(j.sent + ' ta eslatma yuborildi');
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- guruh ro'yxatiga o'quvchi qo'shish ---- */
+  if (a === 'staddopen') { st.stadd = { gid: t.dataset.gid }; return render(); }
+  if (a === 'staddx') { st.stadd = null; return render(); }
+  if (a === 'stadd') {
+    var gid5 = t.dataset.gid, nm5 = ((st.form && st.form.stname) || '').trim(), ph5 = (st.form && st.form.stphone) || '';
+    if (!nm5) return toast('Ism kiriting');
+    return apiCall('savestudent', { student: { group_id: gid5, name: nm5, phone: ph5 } }, function (j) {
+      if (j && j.ok) {
+        toast('Qo\'shildi ✓'); st.stadd = null;
+        if (st.form) { st.form.stname = ''; st.form.stphone = ''; }
+        st.grp = null; render();
+      } else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- o'quvchi kartasi: tahrirlash / o'chirish ---- */
+  if (a === 'stedit') { st.stedit = true; return render(); }
+  if (a === 'steditx') { st.stedit = false; return render(); }
+  if (a === 'stsave') {
+    var sc = st.scard.student, sid5 = sc.id;
+    var nm6 = (((st.form && st.form.editname != null) ? st.form.editname : sc.name) || '').trim();
+    var ph6 = (st.form && st.form.editphone != null) ? st.form.editphone : (sc.phone || '');
+    var uid6 = (st.form && st.form.edituid != null) ? st.form.edituid : (sc.user_id || '');
+    if (!nm6) return toast('Ism kiriting');
+    return apiCall('savestudent', { student: { id: sid5, name: nm6, phone: ph6, group_id: sc.group_id, user_id: uid6 ? +uid6 : null } }, function (j) {
+      if (j && j.ok) { toast('Saqlandi ✓'); st.stedit = false; st.scard = null; st.grp = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'stdel') {
+    if (!confirm('Bu o\'quvchi ro\'yxatdan o\'chirilsinmi? Davomat va natijalari saqlanib qoladi, faqat ro\'yxatdan chiqadi.')) return;
+    return apiCall('delstudent', { id: +t.dataset.id }, function (j) {
+      if (j && j.ok) { toast('O\'chirildi'); st.grp = null; back(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- rol berish (faqat ustoz+) ---- */
+  if (a === 'urole') {
+    var uid7 = +t.dataset.user, r7 = t.dataset.r;
+    if (r7 === 'ustozplus' && !confirm('Bu odamga Ustoz+ huquqi berilsinmi? U hamma guruh, o\'quvchi va sozlamalarni boshqara oladigan bo\'ladi.')) return;
+    return apiCall('setrole', { user: uid7, role: r7 }, function (j) {
+      if (j && j.ok) { toast('Rol yangilandi ✓'); st.users = null; render(); }
       else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
     });
   }
