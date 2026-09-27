@@ -71,7 +71,7 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .card.gold .d{color:rgba(42,33,5,.75)}
 .hint{color:var(--hint); font-size:13.5px}
 .row{display:flex; align-items:center; gap:12px}
-.row .grow{flex:1; min-width:0}
+.grow{flex:1; min-width:0}
 .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
 .chev{color:var(--hint); font-size:22px; flex:none}
 .card.gold .chev{color:rgba(42,33,5,.6)}

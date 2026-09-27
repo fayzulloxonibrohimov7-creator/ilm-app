@@ -366,9 +366,11 @@ function toast(msg) {
   var t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on');
   clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('on'); }, 1600);
 }
-function top(title, sub, withBack) {
+function top(title, sub, withBack, search) {
   return '<div class="top">' + (withBack ? '<button class="back" data-act="back">‹</button>' : '') +
-    '<div><h1>' + title + '</h1>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div></div>';
+    '<div class="grow"><h1>' + title + '</h1>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>' +
+    (search ? '<button class="back" data-go="search" title="Kitobdan qidirish">🔍</button>' : '') +
+    '</div>';
 }
 function rolePill() {
   var r = role();
@@ -746,7 +748,7 @@ function rStudentCard() {
 /* ---- Darslar ---- */
 function rLessons() {
   var cur = currentLesson(), b = blockOf(cur);
-  var h = top('Darslar', esc(ILM.app.course) + ' · ' + N + ' dars · ' + ILM.blocks.length + ' blok', false);
+  var h = top('Darslar', esc(ILM.app.course) + ' · ' + N + ' dars · ' + ILM.blocks.length + ' blok', false, true);
   h += '<div class="card blue tap" data-go="lesson" data-n="' + cur + '"><div class="row"><div class="grow">' +
     '<div class="kicker">Siz hozir · ' + esc(b.title) + '</div><div class="t">' + cur + '-dars' + esc(lt(cur)) + '</div>' +
     '<div class="d">Bosing — davom etasiz</div></div><span class="chev">›</span></div></div>';
@@ -779,7 +781,7 @@ function examRow(e) {
 function rLesson() {
   var n = +st.params.n, l = L(n), p = P(n), s = lessonState(n), locked = s === 'locked';
   var sub = (l.ar ? '<span class="ar">' + esc(l.ar) + '</span>' : '') + (l.uz ? (l.ar ? ' · ' : '') + esc(l.uz) : '');
-  var h = top(n + '-dars', sub || esc(blockOf(n).title), true);
+  var h = top(n + '-dars', sub || esc(blockOf(n).title), true, true);
 
   if (locked) h += '<div class="card"><div class="t">🔒 Bu dars hali yopiq</div><div class="d">Avval ' + (n - 1) + '-darsni tugating: darslik, video va test.</div></div>';
   if (p.placed) h += '<div class="card deep"><div class="t">✓ Kirish imtihoni bilan o\'tilgan</div><div class="d">Bu dars sizga tanish deb topildi. Takrorlash uchun ochiq.</div></div>';
@@ -896,7 +898,7 @@ function lessonHead(n) {
 }
 function rBook() {
   var n = +st.params.n;
-  var h = top('Darslik', n + '-dars', true) + lessonHead(n);
+  var h = top('Darslik', n + '-dars', true, true) + lessonHead(n);
   var d = st.book;
   if (!d || d.n !== n) {
     st.book = { n: n, loading: true };
