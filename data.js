@@ -10,11 +10,13 @@ const ILM = {
     name: "ILM AKADEMIYASI",
     slogan: "Qadrdon ta'lim markazingiz",
     course: "Fonetika",          // hozir faqat shu kurs; Grammatika keyin
-    version: 5,
+    version: 6,
     /* Server (Cloudflare Worker + D1). Bo'sh qoldirilsa — ilova serversiz ishlaydi. */
     api: "https://ilm.ilm-akademiyasi.workers.dev",
     bot: "Ilmakademiyasi_bot",   // «Do'stlarga ulashish» uchun
     changelog: [
+      "Ustoz+ Foydalanuvchilar ro'yxatidan qo'lda qo'shishi va o'chirishi mumkin",
+      "Ustoz+ ga Uy vazifa, Reyting va Ota-ona kodi ham ko'rinadi (guruh tanlab)",
       "Bot orqali eslatma: ertaga dars, to'lov kuni, ustoz yangi dars ochganda",
       "O'quvchi kartasi — ustoz progressi, davomati va to'lovini bir joyda ko'radi",
       "Uy vazifa — ustoz beradi, o'quvchi bajardim deb belgilaydi",

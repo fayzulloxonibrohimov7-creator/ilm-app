@@ -478,11 +478,18 @@ function rHome() {
       h += '<div class="switch"><div><div class="k">Sinov rejimi</div><div class="v">Barcha dars va imtihonlar qulfsiz</div></div><button class="tog ' + (st.testMode ? 'on' : '') + '" data-act="testmode"></button></div>' +
         '<div class="switch"><div><div class="k">O\'quvchi ko\'zi bilan</div><div class="v">O\'quvchi nimani ko\'rishini tekshirish</div></div><button class="tog" data-act="viewas"></button></div>';
     }
-    h += '<div class="switch" style="display:block"><div class="k">Guruh (sinov uchun)</div><div class="v" style="margin-bottom:8px">Jadval va to\'lov kartalarini shu guruh bo\'yicha ko\'rsatadi</div>' +
+    if (st.groups == null) {                                 // haqiqiy guruhlar — bir marta yuklanadi, keshlanadi
+      st.groups = 'loading';
+      apiCall('mygroups', null, function (j) { st.groups = (j && j.ok) ? j : { err: (j && j.error) || 'ulanmadi' }; render(); });
+    }
+    var realGs = (st.groups && st.groups.groups) || null;
+    h += '<div class="switch" style="display:block"><div class="k">Guruh (sinov uchun)</div><div class="v" style="margin-bottom:8px">Jadval va to\'lov kartalarini, Uy vazifa va Reytingni shu guruh bo\'yicha ko\'rsatadi</div>' +
       '<select class="sel" data-act="setgroup"><option value="">— guruh tanlanmagan —</option>' +
-      (ILM.groups || []).map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (progress.group === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') + '</select></div>';
+      (realGs || []).map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (progress.group === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') + '</select>' +
+      (realGs == null ? '<div class="hint" style="margin-top:6px">Yuklanmoqda…</div>' : (!realGs.length ? '<div class="hint" style="margin-top:6px">Hali guruh yaratilmagan</div>' : '')) +
+      '</div>';
     h += link('🧑‍🎓', 'Foydalanuvchilar', srv.on ? 'Kim kirdi, kim online, guruhga qo\'shish' : 'Server ulanmagan', srv.on ? 'data-go="users"' : 'data-act="srvoff"');
-    h += link('👥', 'Guruhlar ro\'yxati', (ILM.groups || []).length + ' guruh · kodlari va jadvali', 'data-go="groups"');
+    h += link('👥', 'Guruhlar ro\'yxati', (realGs ? realGs.length + ' guruh' : 'Yuklanmoqda…') + ' · kodlari va jadvali', 'data-go="groups"');
     h += link('💬', 'Izohlar', 'O\'quvchilardan kelgan izoh va takliflar', 'data-go="feedback"');
     h += link('📊', 'Oylik hisobot', 'Davomat va o\'zlashtirish — guruhlar bo\'yicha', 'data-go="report"');
     h += '<button class="btn ghost wide" style="margin:10px 0" data-act="sendrem">🔔 Eslatmalarni hozir yubor</button>';
@@ -542,6 +549,10 @@ function rUyVazifaCard() {
 }
 function rHomework() {
   var g = myGroup(), h = top('Uy vazifalar', g ? esc(g.name) : '', true);
+  if (isStaff() && !st.viewAs) {                     // ustoz/ustoz+ — guruhga oid boshqaruv ko'rinishi
+    if (!g) return h + empty('👥', 'Guruh tanlanmagan', 'Asosiy ekrandagi Ustoz+ panelidan «Guruh (sinov uchun)» ni tanlang, keyin shu yerga qayting');
+    return h + rGrpHomework(g.id);
+  }
   if (st.hw == null) { st.hw = 'loading'; apiCall('homework_list', null, function (j) { st.hw = (j && j.ok) ? j.items : []; render(); }); }
   if (st.hw === 'loading' || st.hw == null) return h + empty('⏳', 'Yuklanmoqda…', '');
   if (!st.hw.length) return h + empty('📝', 'Vazifa yo\'q', 'Ustoz topshiriq berganda shu yerda chiqadi');
@@ -1199,9 +1210,9 @@ function rProfile() {
       ? link('👥', 'Guruhlarim', 'Davomat · dars ochish · o\'quvchilar', 'data-go="groups"')
       : link('👥', 'Guruhim', g ? esc(g.name) + ' · ' + esc(daysText(g)) + ' ' + esc(g.time) + (g.room ? ' · ' + esc(g.room) : '') : 'Hali biriktirilmagan', 'data-act="none"')) +
     link('🎯', 'Kirish imtihoni', progress.placement && progress.placement.n ? (progress.placement.n > N ? 'Fonetika to\'liq' : progress.placement.n + '-darsdan') + ' · ' + esc(fmt(parseISO(progress.placement.date))) : 'Topshirilmagan', 'data-act="kirish"') +
-    (role() === 'oquvchi' && !st.viewAs ? link('📝', 'Uy vazifalar', "Ustoz bergan topshiriqlar", 'data-go="homework"') : '') +
-    (role() === 'oquvchi' && !st.viewAs ? link('🏆', 'Reyting', 'Guruhim ichida o\'rningiz', 'data-go="rating"') : '') +
-    (role() === 'oquvchi' && !st.viewAs ? link('👪', 'Ota-onam uchun kod', 'Ular ilovadan kuzata oladi', 'data-act="mycode"') : '') +
+    ((role() === 'oquvchi' || isPlus()) && !st.viewAs ? link('📝', 'Uy vazifalar', isPlus() ? "Tanlangan guruh vazifalari" : "Ustoz bergan topshiriqlar", 'data-go="homework"') : '') +
+    ((role() === 'oquvchi' || isPlus()) && !st.viewAs ? link('🏆', 'Reyting', isPlus() ? 'Tanlangan guruh reytingi' : 'Guruhim ichida o\'rningiz', 'data-go="rating"') : '') +
+    ((role() === 'oquvchi' || isPlus()) && !st.viewAs ? link('👪', 'Ota-onam uchun kod', isPlus() ? 'Faqat o\'quvchi hisobida ishlaydi' : 'Ular ilovadan kuzata oladi', 'data-act="mycode"') : '') +
     '</div>';
   h += '<div class="card">' +
     link('💬', 'Izoh va taklif', isStaff() && !st.viewAs ? "O'quvchilardan kelgan xabarlar" : 'Fikr va takliflaringizni yozing', 'data-go="feedback"') +
@@ -1389,6 +1400,17 @@ function rUsers() {
 
   var gs = (d.groups && d.groups.length) ? d.groups : (ILM.groups || []);   // serverdagi guruhlar
   srv.glist = d.groups || null;
+
+  if (isPlus()) {
+    h += st.uadd
+      ? '<div class="card"><div class="kicker">Qo\'lda qo\'shish</div><div class="d" style="margin-bottom:10px">Botga hali yozmagan bo\'lsa ham, Telegram ID va ismini bilsangiz oldindan qo\'shib qo\'yishingiz mumkin.</div>' +
+        '<div class="fld"><label>Telegram ID</label><input class="inp2" data-f="newuid" value="' + esc((st.form && st.form.newuid) || '') + '" placeholder="8558107235" inputmode="numeric"></div>' +
+        '<div class="fld"><label>Ism</label><input class="inp2" data-f="newuname" value="' + esc((st.form && st.form.newuname) || '') + '" placeholder="Ism Familiya"></div>' +
+        '<div class="fld"><label>Username (ixtiyoriy)</label><input class="inp2" data-f="newuuser" value="' + esc((st.form && st.form.newuuser) || '') + '" placeholder="username"></div>' +
+        '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="uadd">Qo\'shish</button><button class="btn sm ghost" data-act="uaddx">Bekor qilish</button></div></div>'
+      : '<button class="btn ghost wide" style="margin-bottom:12px" data-act="uaddopen">+ Foydalanuvchini qo\'lda qo\'shish</button>';
+  }
+
   d.users.forEach(function (u) {
     var on = (d.now - u.last_seen) < 5 * 60 * 1000;
     var g = u.group_id ? groupById(u.group_id) : null;
@@ -1399,7 +1421,9 @@ function rUsers() {
       '<div class="d">@' + esc(u.username || '—') + ' · ID ' + u.id + '</div>' +
       '<div class="hint">Qo\'shildi: ' + dtx(u.first_seen) + ' · ' + (!u.last_seen ? 'Ilovani hali ochmagan' : 'Oxirgi: ' + (on ? 'online' : ago(u.last_seen))) + '</div>' +
       (u.placement ? '<div class="hint">Kirish imtihoni: ' + u.placement + '-darsdan</div>' : '') +
-      '</div></div>' +
+      '</div>' +
+      (isPlus() && u.id !== user.id ? '<button class="wbtn" data-act="udel" data-id="' + u.id + '" title="Ro\'yxatdan o\'chirish">🗑️</button>' : '') +
+      '</div>' +
       '<select class="sel" style="margin-top:10px" data-act="ugroup" data-user="' + u.id + '">' +
       '<option value="">— guruhga qo\'shilmagan —</option>' +
       gs.map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (u.group_id === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') +
@@ -1484,6 +1508,27 @@ document.getElementById('app').addEventListener('click', function (e) {
   if (a === 'soon') return toast('Tez orada qo\'shiladi');
   if (a === 'srvoff') return toast(inTG ? 'Server ulanmadi — biroz kuting' : 'Faqat Telegram ichida ishlaydi');
   if (a === 'reloadusers') { st.users = null; return render(); }
+  if (a === 'uaddopen') { st.uadd = true; return render(); }
+  if (a === 'uaddx') { st.uadd = false; return render(); }
+  if (a === 'uadd') {
+    var nid = +((st.form && st.form.newuid) || 0), nname = ((st.form && st.form.newuname) || '').trim();
+    if (!nid || nid < 1) return toast('Telegram ID ni to\'g\'ri kiriting');
+    if (!nname) return toast('Ismni kiriting');
+    return apiCall('adduser', { id: nid, name: nname, username: (st.form && st.form.newuuser) || '' }, function (j) {
+      if (j && j.ok) {
+        toast('Qo\'shildi ✓'); st.uadd = false;
+        if (st.form) { st.form.newuid = ''; st.form.newuname = ''; st.form.newuuser = ''; }
+        st.users = null; render();
+      } else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'udel') {
+    if (!confirm('Bu foydalanuvchi ro\'yxatdan butunlay o\'chirilsinmi? Bu amalni qaytarib bo\'lmaydi.')) return;
+    return apiCall('deluser', { id: +t.dataset.id }, function (j) {
+      if (j && j.ok) { toast('O\'chirildi'); st.users = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
   if (a === 'regroups') { st.groups = null; return render(); }
   if (a === 'regrp') { st.grp = null; return render(); }
   if (a === 'grpn') {                                     // davomat uchun dars raqamini almashtirish
