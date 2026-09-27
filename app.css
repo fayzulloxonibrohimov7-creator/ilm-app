@@ -491,3 +491,23 @@ h2.sec{font-size:17px; font-weight:600; color:var(--text2); margin:26px 0 10px}
 .tabs.big{margin-bottom:10px}
 .tabs.big button.on{background:var(--g-gold); color:var(--on-gold)}
 #nav button{font-size:11.5px; padding:0 2px}
+
+/* ---- kichik dumaloq tugma (‹ › ℹ️ 🗑️) ---- */
+.wbtn{
+  width:38px; height:38px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.08);
+  font-size:16px; flex:none; display:grid; place-items:center; margin-left:8px;
+}
+.wbtn:active{transform:scale(.93)}
+.att .wbtn{margin-left:auto}
+
+/* ---- davomat/uy vazifa qatorida ikkinchi qatorli matn ---- */
+.att .grow{flex:1; min-width:0}
+.att .grow .nm{font-weight:600; font-size:15.5px}
+.att .grow .hint{display:block; margin-top:2px}
+
+/* ---- katta matn maydoni ---- */
+.inp2.ta{height:auto; min-height:78px; padding:10px 13px; line-height:1.45; resize:vertical; font-family:inherit}
+.inp2[type="date"]{color-scheme:dark}
+
+/* ---- izoh/taklif kartasidagi holat va sarlavha ---- */
+.card .row .pill{margin:0; flex:none; align-self:flex-start}

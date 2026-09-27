@@ -131,7 +131,76 @@ function grantAccess(r) {
   if (tg && tg.CloudStorage) { try { tg.CloudStorage.setItem('access', r.code, function () {}); } catch (e) {} }
   progress.group = r.group || r.code; save();
 }
+
+/* ---------- ota-ona rejimi: alohida, tabsiz ko'rinish ---------- */
+var PARENTKEY = 'ilm-parent-' + user.id;
+var parentMode = false;
+try { parentMode = localStorage.getItem(PARENTKEY) === '1'; } catch (e) {}
+function tryPGate() {
+  var inp = document.getElementById('pcode'); if (!inp) return;
+  var code = inp.value.trim(); if (!code) return;
+  apiCall('parentlink', { code: code }, function (j) {
+    if (j && j.ok) {
+      parentMode = true;
+      try { localStorage.setItem(PARENTKEY, '1'); } catch (e) {}
+      st.pv = null; toast('Bog\'landi: ' + j.name); render();
+    } else { st.pgateErr = true; render(); }
+  });
+}
+function tryPGate2() {
+  var inp = document.getElementById('pcode2'); if (!inp) return;
+  var code = inp.value.trim(); if (!code) return;
+  apiCall('parentlink', { code: code }, function (j) {
+    if (j && j.ok) { toast('Qo\'shildi: ' + j.name); st.pv = null; st.pvAdd = false; render(); }
+    else toast('Kod noto\'g\'ri');
+  });
+}
+function renderParent() {
+  document.getElementById('nav').innerHTML = '';
+  var h = '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Ota-ona kuzatuvi</h1></div></div>';
+  var d = st.pv;
+  if (d == null) {
+    st.pv = 'loading';
+    apiCall('parentview', null, function (j) { st.pv = (j && j.ok) ? j.children : []; render(); });
+    document.getElementById('view').innerHTML = h + empty('⏳', 'Yuklanmoqda…', '');
+    return;
+  }
+  if (d === 'loading') { document.getElementById('view').innerHTML = h + empty('⏳', 'Yuklanmoqda…', ''); return; }
+  if (st.pvAdd) {
+    document.getElementById('view').innerHTML = h + '<div class="card"><div class="t">Yana bitta farzand kodi</div>' +
+      '<input id="pcode2" class="inp" placeholder="OTA-XXXXX" autocomplete="off" autocapitalize="characters">' +
+      '<button class="btn gold wide" data-act="pgate2">Qo\'shish</button></div>' +
+      '<button class="btn ghost wide" data-act="pvaddx">Bekor qilish</button>';
+    var p2 = document.getElementById('pcode2');
+    if (p2) { p2.focus(); p2.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryPGate2(); }); }
+    return;
+  }
+  if (!d.length) {
+    h += empty('👤', 'Farzand topilmadi', 'Kod noto\'g\'ri kiritilgan bo\'lishi mumkin') +
+      '<button class="btn ghost wide" data-act="punlink">Boshqa kod kiritish</button>';
+  } else {
+    d.forEach(function (c) {
+      var g = c.group;
+      h += '<div class="card blue"><div class="t">' + esc(c.name) + '</div>' +
+        (g ? '<div class="d">' + esc(g.name) + ' · ' + esc(String(g.days || '').split(',').join('/')) + (g.time ? ' · soat ' + esc(g.time) : '') + '</div>' : '<div class="d">Guruhga hali biriktirilmagan</div>') + '</div>';
+      h += '<div class="card"><div class="stats" style="margin:0;padding:0;border:none">' +
+        '<div><b>' + c.done + '</b><span>o\'tilgan dars</span></div>' +
+        '<div><b>' + c.acc + '%</b><span>aniqlik</span></div></div></div>';
+      if (c.attendance && c.attendance.length) {
+        h += '<div class="card"><div class="kicker">Davomat</div><div class="dgrid" style="margin-top:10px">';
+        c.attendance.forEach(function (a) { h += '<span class="dc ' + (a.present ? 'bor' : 'yoq') + '">' + a.n + '</span>'; });
+        h += '</div></div>';
+      }
+      h += '<div class="card"><div class="kicker">To\'lov</div><div class="t">' +
+        (c.paid_until ? '✓ ' + esc(fmt(parseISO(c.paid_until))) + 'gacha to\'langan' : 'Ma\'lumot yo\'q') + '</div></div>';
+    });
+    h += '<button class="btn ghost wide" data-act="pvadd">+ Yana farzand qo\'shish</button>' +
+      '<button class="btn ghost wide" style="margin-top:8px" data-act="punlink">Chiqish</button>';
+  }
+  document.getElementById('view').innerHTML = h;
+}
 function rGate() {
+  if (st.gateMode === 'parent') return rGateParent();
   return '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Xush kelibsiz</h1>' +
     '<div class="sub" style="color:var(--gold2)">' + esc(ILM.app.slogan || '') + '</div></div></div>' +
     '<div class="card blue"><div class="row"><div class="avatar">' + esc(user.name.charAt(0).toUpperCase()) + '</div>' +
@@ -140,7 +209,17 @@ function rGate() {
     '<input id="code" class="inp" placeholder="Kodni kiriting" autocomplete="off" autocapitalize="characters">' +
     (st.gateErr ? '<div class="hint" style="color:var(--red);text-align:center;margin-bottom:10px">Kod noto\'g\'ri — qayta urinib ko\'ring</div>' : '') +
     '<button class="btn gold wide" data-act="gate">Kirish</button></div>' +
-    '<div class="hint" style="text-align:center">Kod yo\'qmi? Markaz bilan bog\'laning' + (ILM.center.phone ? ': ' + esc(ILM.center.phone) : '.') + '</div>';
+    '<div class="hint" style="text-align:center">Kod yo\'qmi? Markaz bilan bog\'laning' + (ILM.center.phone ? ': ' + esc(ILM.center.phone) : '.') + '</div>' +
+    '<div class="hint" style="text-align:center;margin-top:14px"><span data-act="gatemode" data-m="parent" style="color:var(--gold2);text-decoration:underline">Farzandim o\'qiydi — ota-ona sifatida kuzatmoqchiman</span></div>';
+}
+function rGateParent() {
+  return '<div class="top"><div><div class="kicker">' + esc(ILM.app.name) + '</div><h1>Ota-ona kuzatuvi</h1>' +
+    '<div class="sub" style="color:var(--gold2)">Farzandingiz o\'qishini shu yerdan kuzatasiz</div></div></div>' +
+    '<div class="card"><div class="t">Farzand kodi</div><div class="d">Ustozdan yoki farzandingiz ilovasidan (Profil → Ota-onam uchun kod) olinadi.</div>' +
+    '<input id="pcode" class="inp" placeholder="OTA-XXXXX" autocomplete="off" autocapitalize="characters">' +
+    (st.pgateErr ? '<div class="hint" style="color:var(--red);text-align:center;margin-bottom:10px">Kod noto\'g\'ri</div>' : '') +
+    '<button class="btn gold wide" data-act="pgate">Kirish</button></div>' +
+    '<div class="hint" style="text-align:center"><span data-act="gatemode" data-m="student" style="color:var(--gold2);text-decoration:underline">← O\'quvchi sifatida kirish</span></div>';
 }
 
 /* ---------- sana yordamchilari ---------- */
@@ -352,6 +431,9 @@ function rHome() {
   /* davomat va o'zlashtirish */
   h += rDavomat();
 
+  /* uy vazifa — o'quvchida */
+  if (role() === 'oquvchi') h += rUyVazifaCard();
+
   /* kirish imtihoni taklifi — yangi o'quvchiga */
   if (role() === 'oquvchi' && !progress.placement && done === 0)
     h += '<div class="card deep tap" data-act="kirish"><div class="row"><div class="cic">🎯</div><div class="grow"><div class="t">Avval o\'qiganmisiz?</div><div class="d">Kirish imtihoni qaysi darsdan boshlashni aniqlab beradi</div></div><span class="chev">›</span></div></div>';
@@ -362,12 +444,18 @@ function rHome() {
     h += '<div class="card"><div class="row"><div class="grow"><div class="kicker">Guruhim</div><div class="t">' + esc(g.name) + '</div>' +
       '<div class="d">' + esc(g.teacher) + ' · ' + esc(daysText(g)) + ' · ' + esc(g.time) + '</div></div><div class="cic">👥</div></div>' +
       '<div class="stats"><div><b>' + ms.total + '</b><span>' + cap(MONTHS[t.getMonth()]) + 'da dars</span></div><div><b>' + ms.past + '</b><span>o\'tdi</span></div><div><b>' + (ms.total - ms.past) + '</b><span>qoldi</span></div></div></div>';
-    var np = nextPay(g);
-    if (np) {
-      var pc = np.late ? 'late' : (np.left <= 3 ? 'gold' : '');
-      h += '<div class="card ' + pc + '"><div class="row"><div class="grow"><div class="kicker">To\'lov</div>' +
-        '<div class="t">' + (np.late ? 'To\'lov kuni o\'tdi' : np.left === 0 ? 'Bugun to\'lov kuni' : 'Keyingi to\'lov: ' + fmt(np.date)) + '</div>' +
-        '<div class="d">' + money(np.amount) + ' so\'m' + (np.late ? ' · ' + fmt(np.date) + ' edi' : np.left > 0 ? ' · ' + np.left + ' kun qoldi' : '') + '</div></div><div class="cic">💳</div></div></div>';
+    var pu = srv.me && srv.me.paid_until;
+    if (pu && pu >= iso(t)) {
+      h += '<div class="card" style="border-color:rgba(61,220,132,.45);background:rgba(61,220,132,.08)"><div class="row"><div class="grow"><div class="kicker">To\'lov</div>' +
+        '<div class="t">✓ To\'langan</div><div class="d">' + esc(fmt(parseISO(pu))) + 'gacha</div></div><div class="cic">💳</div></div></div>';
+    } else {
+      var np = nextPay(g);
+      if (np) {
+        var pc = np.late ? 'late' : (np.left <= 3 ? 'gold' : '');
+        h += '<div class="card ' + pc + '"><div class="row"><div class="grow"><div class="kicker">To\'lov</div>' +
+          '<div class="t">' + (np.late ? 'To\'lov kuni o\'tdi' : np.left === 0 ? 'Bugun to\'lov kuni' : 'Keyingi to\'lov: ' + fmt(np.date)) + '</div>' +
+          '<div class="d">' + money(np.amount) + ' so\'m' + (np.late ? ' · ' + fmt(np.date) + ' edi' : np.left > 0 ? ' · ' + np.left + ' kun qoldi' : '') + '</div></div><div class="cic">💳</div></div></div>';
+      }
     }
   }
 
@@ -395,7 +483,10 @@ function rHome() {
       (ILM.groups || []).map(function (gg) { return '<option value="' + esc(gg.id) + '"' + (progress.group === gg.id ? ' selected' : '') + '>' + esc(gg.name) + '</option>'; }).join('') + '</select></div>';
     h += link('🧑‍🎓', 'Foydalanuvchilar', srv.on ? 'Kim kirdi, kim online, guruhga qo\'shish' : 'Server ulanmagan', srv.on ? 'data-go="users"' : 'data-act="srvoff"');
     h += link('👥', 'Guruhlar ro\'yxati', (ILM.groups || []).length + ' guruh · kodlari va jadvali', 'data-go="groups"');
-    h += '<div class="hint" style="margin-top:10px">Server: ' + (srv.on ? '✅ ulangan · ' + ago(srv.last) : (API ? '⚠️ ' + esc(srv.err || (inTG ? 'ulanmoqda…' : 'faqat Telegram ichida ishlaydi')) : 'sozlanmagan')) + '</div>';
+    h += link('💬', 'Izohlar', 'O\'quvchilardan kelgan izoh va takliflar', 'data-go="feedback"');
+    h += link('📊', 'Oylik hisobot', 'Davomat va o\'zlashtirish — guruhlar bo\'yicha', 'data-go="report"');
+    h += '<button class="btn ghost wide" style="margin:10px 0" data-act="sendrem">🔔 Eslatmalarni hozir yubor</button>';
+    h += '<div class="hint" style="margin-top:2px">Server: ' + (srv.on ? '✅ ulangan · ' + ago(srv.last) : (API ? '⚠️ ' + esc(srv.err || (inTG ? 'ulanmoqda…' : 'faqat Telegram ichida ishlaydi')) : 'sozlanmagan')) + '</div>';
     if (!st.viewAs) h += '<div class="switch"><div><div class="k">Progressni tozalash</div><div class="v">Hamma natija o\'chadi (guruh qoladi)</div></div><button class="btn sm red" data-act="reset">Tozalash</button></div>';
     h += '</div>';
   }
@@ -434,6 +525,211 @@ function rDavomat() {
 function nextExam() {
   for (var i = 0; i < ILM.exams.length; i++) if (!examOk(ILM.exams[i].id)) return ILM.exams[i];
   return null;
+}
+
+/* ---- Uy vazifa (o'quvchi) ---- */
+function rUyVazifaCard() {
+  if (st.hw == null) {
+    st.hw = 'loading';
+    apiCall('homework_list', null, function (j) { st.hw = (j && j.ok) ? j.items : []; render(); });
+    return '';
+  }
+  if (st.hw === 'loading' || !st.hw.length) return '';
+  var open = st.hw.filter(function (x) { return !x.done; }).length;
+  return '<div class="card tap" data-go="homework"><div class="row"><div class="grow"><div class="kicker">Uy vazifa</div>' +
+    '<div class="t">' + (open ? open + ' ta bajarilmagan' : 'Hammasi bajarilgan ✓') + '</div>' +
+    '<div class="d">' + st.hw.length + ' ta topshiriq</div></div><div class="cic">📝</div></div></div>';
+}
+function rHomework() {
+  var g = myGroup(), h = top('Uy vazifalar', g ? esc(g.name) : '', true);
+  if (st.hw == null) { st.hw = 'loading'; apiCall('homework_list', null, function (j) { st.hw = (j && j.ok) ? j.items : []; render(); }); }
+  if (st.hw === 'loading' || st.hw == null) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (!st.hw.length) return h + empty('📝', 'Vazifa yo\'q', 'Ustoz topshiriq berganda shu yerda chiqadi');
+  st.hw.forEach(function (x) {
+    h += '<div class="att' + (x.done ? ' on' : '') + '" data-act="hwdone" data-id="' + x.id + '" data-undo="' + (x.done ? 1 : 0) + '">' +
+      '<span class="box">' + (x.done ? '✓' : '') + '</span>' +
+      '<div class="grow"><div class="nm" style="white-space:normal">' + esc(x.text) + '</div>' +
+      (x.n ? '<span class="hint">' + x.n + '-darsga oid' + esc(lt(x.n)) + '</span>' : '') +
+      (x.due ? '<span class="hint">Muddat: ' + esc(fmt(parseISO(x.due))) + '</span>' : '') + '</div></div>';
+  });
+  return h;
+}
+
+/* ---- Uy vazifa (ustoz — guruh ichida) ---- */
+function rGrpHomework(gid) {
+  var d = st.ghw;
+  if (d == null || d.gid !== gid) {
+    st.ghw = { gid: gid, loading: true };
+    apiCall('homework_list', { group: gid }, function (j) { st.ghw = { gid: gid, items: (j && j.ok) ? j.items : [] }; render(); });
+    return '<div class="card"><div class="kicker">Uy vazifa</div>' + empty('⏳', 'Yuklanmoqda…', '') + '</div>';
+  }
+  var h = '<div class="card"><div class="kicker">Uy vazifa</div>';
+  if (d.loading) h += empty('⏳', 'Yuklanmoqda…', '');
+  else if (!d.items.length) h += '<div class="d" style="margin:8px 0">Hali vazifa berilmagan</div>';
+  else d.items.forEach(function (x) {
+    h += '<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line)"><div class="grow">' +
+      '<div class="t" style="font-size:14.5px">' + esc(x.text) + '</div>' +
+      '<div class="hint">' + (x.n ? x.n + '-dars · ' : '') + x.done + '/' + x.total + ' bajardi' + (x.due ? ' · muddat ' + esc(fmt(parseISO(x.due))) : '') + '</div></div>' +
+      '<button class="wbtn" data-act="hwdel" data-id="' + x.id + '">🗑️</button></div>';
+  });
+  h += '<div class="fld" style="margin-top:10px"><textarea class="inp2 ta" data-f="hwtext" rows="2" placeholder="Yangi vazifa matni…">' + esc((st.form && st.form.hwtext) || '') + '</textarea></div>' +
+    '<button class="btn sm gold" data-act="hwadd" data-gid="' + esc(gid) + '">+ Vazifa qo\'shish</button>' +
+    '</div>';
+  return h;
+}
+
+/* ---- Izoh va taklif ---- */
+var FB_KINDS = [['taklif', '💡 Taklif'], ['muammo', '⚠️ Muammo']];
+function fbCard(f, admin) {
+  var pill = f.status === 'yangi' ? '<span class="pill">Yangi</span>' : f.status === 'korildi' ? '<span class="pill blue">Ko\'rildi</span>' : '<span class="pill gold">Hal qilindi</span>';
+  var h = '<div class="card"><div class="row"><div class="grow">' +
+    (admin ? '<div class="kicker">' + esc(f.uname || '—') + ' · @' + esc(f.uusername || '—') + '</div>' : '') +
+    '<div class="d" style="white-space:pre-wrap">' + esc(f.text) + '</div>' +
+    '<div class="hint" style="margin-top:6px">' + dtx(f.at) + '</div>' +
+    (f.reply ? '<div class="hint" style="margin-top:6px;color:var(--gold2)">Javob: ' + esc(f.reply) + '</div>' : '') +
+    '</div>' + pill + '</div>';
+  if (admin && f.status !== 'hal') {
+    h += '<div class="fld" style="margin-top:10px"><textarea class="inp2 ta" data-f="fbreply' + f.id + '" rows="2" placeholder="Javob (ixtiyoriy)">' + esc((st.form && st.form['fbreply' + f.id]) || '') + '</textarea></div>' +
+      '<div class="row" style="gap:8px"><button class="btn sm" data-act="fbstatus" data-id="' + f.id + '" data-s="korildi">Ko\'rildi</button>' +
+      '<button class="btn sm gold" data-act="fbstatus" data-id="' + f.id + '" data-s="hal">Hal qilindi</button></div>';
+  }
+  return h + '</div>';
+}
+function rFeedback() {
+  if (isStaff() && !st.viewAs) return rFeedbackAdmin();
+  var h = top('Izoh va taklif', 'Fikringiz muhim', true);
+  h += '<div class="card"><div class="fld"><label>Turi</label><div class="dsel">' +
+    FB_KINDS.map(function (k) { return '<button class="' + ((st.fbKind || 'taklif') === k[0] ? 'on' : '') + '" data-act="fbkind" data-k="' + k[0] + '">' + k[1] + '</button>'; }).join('') +
+    '</div></div>' +
+    '<div class="fld"><label>Xabar</label><textarea class="inp2 ta" data-f="fbtext" rows="4" placeholder="Fikringizni yozing…">' + esc((st.form && st.form.fbtext) || '') + '</textarea></div>' +
+    '<button class="btn gold wide" data-act="fbsend">Yuborish</button></div>';
+  if (st.fbmine == null) { st.fbmine = 'loading'; apiCall('feedback_mine', null, function (j) { st.fbmine = (j && j.ok) ? j.items : []; render(); }); }
+  if (st.fbmine && st.fbmine !== 'loading' && st.fbmine.length) {
+    h += '<h2 class="sec">Yuborganlarim</h2>';
+    st.fbmine.forEach(function (f) { h += fbCard(f, false); });
+  }
+  return h;
+}
+function rFeedbackAdmin() {
+  var h = top('Izohlar', 'O\'quvchilardan kelgan', true);
+  if (st.fb == null) { st.fb = 'loading'; apiCall('feedback_list', null, function (j) { st.fb = (j && j.ok) ? j.items : []; render(); }); }
+  if (st.fb === 'loading' || st.fb == null) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (!st.fb.length) return h + empty('💬', 'Izoh yo\'q', '');
+  st.fb.forEach(function (f) { h += fbCard(f, true); });
+  return h;
+}
+
+/* ---- Kitobdan qidirish ---- */
+function rSearch() {
+  var h = top('Kitobdan qidirish', 'So\'z yoki harf yozing', true);
+  h += '<div class="card"><input class="inp2" data-f="q" value="' + esc((st.form && st.form.q) || '') + '" placeholder="masalan: fatha, tanvin, ر harfi…" autocomplete="off"></div>';
+  var q = ((st.form && st.form.q) || '').trim();
+  if (q.length < 2) return h + empty('🔍', 'Qidirish uchun kamida 2 ta harf yozing', '');
+  if (st.search == null || st.search.q !== q) {
+    st.search = { q: q, loading: true };
+    apiCall('search', { q: q }, function (j) {
+      if (((st.form && st.form.q) || '').trim() === q) { st.search = { q: q, items: (j && j.ok) ? j.items : [] }; render(); }
+    });
+    return h + empty('⏳', 'Qidirilmoqda…', '');
+  }
+  if (st.search.loading) return h + empty('⏳', 'Qidirilmoqda…', '');
+  if (!st.search.items.length) return h + empty('🔍', 'Hech narsa topilmadi', '');
+  st.search.items.forEach(function (r) {
+    h += '<div class="card tap" data-go="lesson" data-n="' + r.n + '"><div class="row"><div class="grow">' +
+      '<div class="t">' + r.n + '-dars' + (r.uz ? ' · ' + esc(r.uz) : '') + (r.ar ? ' · <span class="ar">' + esc(r.ar) + '</span>' : '') + '</div>' +
+      '<div class="d">' + esc(r.snippet) + '</div></div><span class="chev">›</span></div></div>';
+  });
+  return h;
+}
+
+/* ---- Reyting ---- */
+function rRating() {
+  var g = myGroup(), useId = st.params.gid || (g && g.id);
+  var h = top('Reyting', g && !st.params.gid ? esc(g.name) : '', true);
+  if (!useId) return h + empty('👥', 'Guruh yo\'q', 'Reyting guruh ichida hisoblanadi');
+  if (st.rating == null || st.rating.gid !== useId) {
+    st.rating = { gid: useId, loading: true };
+    apiCall('rating', { group: useId }, function (j) { st.rating = { gid: useId, items: (j && j.ok) ? j.items : [] }; render(); });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (st.rating.loading) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (!st.rating.items.length) return h + empty('🏆', 'Ro\'yxat bo\'sh', '');
+  st.rating.items.forEach(function (r, i) {
+    var mine = role() === 'oquvchi' && r.name === user.name;
+    h += '<div class="card' + (mine ? ' blue' : '') + '"><div class="row"><div class="cic" style="font-weight:800">' + (i + 1) + '</div>' +
+      '<div class="grow"><div class="t">' + esc(r.name) + '</div><div class="d">' + r.done + ' dars · ' + r.acc + '% aniqlik' + (r.linked ? '' : ' · ilovaga kirmagan') + '</div></div></div></div>';
+  });
+  return h;
+}
+
+/* ---- Oylik hisobot (ustoz / ustoz+) ---- */
+function rReport() {
+  var h = top('Oylik hisobot', 'Joriy oy', true);
+  if (st.report == null) { st.report = 'loading'; apiCall('report', null, function (j) { st.report = (j && j.ok) ? j : { err: (j && j.error) || 'ulanmadi' }; render(); }); }
+  if (st.report === 'loading' || st.report == null) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (st.report.err) return h + empty('⚠️', 'Olinmadi', esc(st.report.err));
+  if (!st.report.groups.length) return h + empty('📊', 'Guruh yo\'q', '');
+  st.report.groups.forEach(function (g) {
+    h += '<div class="card"><div class="t">' + esc(g.group) + '</div>' +
+      '<div class="stats"><div><b>' + g.students + '</b><span>o\'quvchi</span></div>' +
+      '<div><b>' + (g.attendancePct == null ? '—' : g.attendancePct + '%') + '</b><span>davomat</span></div>' +
+      '<div><b>' + (g.avgAcc == null ? '—' : g.avgAcc + '%') + '</b><span>aniqlik</span></div></div>';
+    if (g.zaif.length) h += '<div class="hint" style="margin-top:8px;color:var(--red)">E\'tibor talab qiladi: ' + g.zaif.map(function (z) { return esc(z.name) + ' (' + z.kelmagan + ' marta kelmagan)'; }).join(', ') + '</div>';
+    h += '</div>';
+  });
+  return h;
+}
+
+/* ---- O'quvchi kartasi (ustoz / ustoz+) ---- */
+function rStudentCard() {
+  var id = st.params.id, h = top('Yuklanmoqda…', '', true);
+  if (st.scard == null || st.scard.id !== id) {
+    st.scard = { id: id, loading: true };
+    apiCall('student', { student: id }, function (j) {
+      st.scard = (j && j.ok) ? merge({ id: id }, j) : { id: id, err: (j && j.error) || 'ulanmadi' };
+      render();
+    });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (st.scard.loading) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (st.scard.err) return h + empty('⚠️', 'Ochilmadi', esc(st.scard.err));
+  var s = st.scard.student, u = st.scard.user, p = st.scard.progress || {};
+  var done = p.lessons ? Object.keys(p.lessons).filter(function (k) { return p.lessons[k].passed; }).length : 0;
+  var acc = (p.stat && p.stat.ans) ? Math.round(p.stat.ok / p.stat.ans * 100) : 0;
+  h = top(esc(s.name), s.phone ? esc(s.phone) : '', true);
+  h += '<div class="card blue"><div class="stats" style="margin:0;padding:0;border:none">' +
+    '<div><b>' + done + '</b><span>o\'tilgan dars</span></div>' +
+    '<div><b>' + acc + '%</b><span>aniqlik</span></div>' +
+    '<div><b>' + (p.mistakes ? p.mistakes.length : 0) + '</b><span>xato</span></div></div></div>';
+
+  if (st.scard.attendance && st.scard.attendance.length) {
+    h += '<div class="card"><div class="kicker">Davomat</div><div class="dgrid" style="margin-top:10px">';
+    st.scard.attendance.forEach(function (a) { h += '<span class="dc ' + (a.present ? 'bor' : 'yoq') + '">' + a.n + '</span>'; });
+    h += '</div></div>';
+  } else h += '<div class="card"><div class="d">Davomat hali yo\'q</div></div>';
+
+  h += '<div class="card"><div class="kicker">To\'lov holati</div>' +
+    '<div class="t">' + (u && u.paid_until ? '✓ ' + esc(fmt(parseISO(u.paid_until))) + 'gacha to\'langan' : 'To\'lov belgilanmagan') + '</div>' +
+    (u ? '<div class="fld" style="margin-top:10px"><label>Yangi sana (to\'langan hisoblanadi)</label>' +
+      '<input class="inp2" type="date" data-f="paiduntil' + s.id + '" value="' + esc((st.form && st.form['paiduntil' + s.id]) || '') + '"></div>' +
+      '<button class="btn sm gold" data-act="setpaid" data-uid="' + u.id + '" data-sid="' + s.id + '">Belgilash</button>' :
+      '<div class="hint">O\'quvchi hali ilovaga kirmagan — to\'lov Telegram hisobiga bog\'liq</div>') +
+    '</div>';
+
+  h += '<div class="card"><div class="kicker">Ota-ona kodi</div>' +
+    (s.parent_code ? '<div class="t" style="font-family:monospace">' + esc(s.parent_code) + '</div><div class="d">Ota-onasiga shu kodni bering — ilovada "Ota-onaman" havolasidan kiritadi</div>' :
+      '<div class="d">Hali yaratilmagan</div>') +
+    '<button class="btn sm ghost" style="margin-top:10px" data-act="gencode" data-id="' + s.id + '">' + (s.parent_code ? 'Qayta ko\'rish' : 'Kod yaratish') + '</button></div>';
+
+  if (st.scard.events && st.scard.events.length) {
+    h += '<div class="card"><div class="kicker">Oxirgi natijalar</div>';
+    st.scard.events.slice(0, 10).forEach(function (e) {
+      h += '<div class="row" style="padding:6px 0"><div class="grow"><div class="t" style="font-size:14.5px">' + esc(e.kind) + ' · ' + esc(e.ref) + '</div>' +
+        '<div class="hint">' + dtx(e.at) + '</div></div><div>' + (e.passed ? '✓ ' : '') + e.score + '/' + e.total + '</div></div>';
+    });
+    h += '</div>';
+  }
+  return h;
 }
 
 /* ---- Darslar ---- */
@@ -479,7 +775,7 @@ function rLesson() {
 
   var dis = locked ? ' dis' : '';
   h += '<div class="part' + (p.book ? ' ok' : '') + dis + '" data-go="book" data-n="' + n + '"><div class="ic">📖</div>' +
-    '<div class="grow"><div class="t">Darslik</div><div class="d">' + (l.pages.length ? l.pages.length + ' bet' : 'betlar keyin qo\'shiladi') + '</div></div>' +
+    '<div class="grow"><div class="t">Darslik</div><div class="d">Kitob matni' + (l.bet ? ' · ' + esc(l.bet) + '-bet' : '') + '</div></div>' +
     '<div class="mark">' + (p.book ? '✓' : '›') + '</div></div>';
   h += '<div class="part' + (p.video ? ' ok' : '') + dis + '" data-go="video" data-n="' + n + '"><div class="ic">🎬</div>' +
     '<div class="grow"><div class="t">Video darslik</div><div class="d">' + (p.video ? 'Ko\'rildi' : (l.video ? 'Oxirigacha ko\'ring' : 'video keyin qo\'shiladi')) + '</div></div>' +
@@ -895,12 +1191,22 @@ function rProfile() {
     '<div class="stats"><div><b>' + doneCount() + '</b><span>o\'tilgan dars</span></div>' +
     '<div><b>' + accuracy() + '%</b><span>aniqlik</span></div>' +
     '<div><b>' + progress.mistakes.length + '</b><span>xato</span></div></div></div>';
+  if (st.mycode) h += '<div class="card gold" style="text-align:center"><div class="kicker">Ota-ona kodi</div>' +
+    '<div class="t" style="font-family:monospace;font-size:22px;letter-spacing:.04em">' + esc(st.mycode) + '</div>' +
+    '<div class="d">Ota-onangizga shu kodni yuboring — ular "Farzandim o\'qiydi" havolasidan kiritadi</div></div>';
   h += '<div class="card">' +
     (isStaff() && !st.viewAs
       ? link('👥', 'Guruhlarim', 'Davomat · dars ochish · o\'quvchilar', 'data-go="groups"')
       : link('👥', 'Guruhim', g ? esc(g.name) + ' · ' + esc(daysText(g)) + ' ' + esc(g.time) + (g.room ? ' · ' + esc(g.room) : '') : 'Hali biriktirilmagan', 'data-act="none"')) +
-    link('🎯', 'Kirish imtihoni', progress.placement && progress.placement.n ? (progress.placement.n > N ? 'Fonetika to\'liq' : progress.placement.n + '-darsdan') + ' · ' + esc(fmt(parseISO(progress.placement.date))) : 'Topshirilmagan', 'data-act="kirish"') + '</div>';
+    link('🎯', 'Kirish imtihoni', progress.placement && progress.placement.n ? (progress.placement.n > N ? 'Fonetika to\'liq' : progress.placement.n + '-darsdan') + ' · ' + esc(fmt(parseISO(progress.placement.date))) : 'Topshirilmagan', 'data-act="kirish"') +
+    (role() === 'oquvchi' && !st.viewAs ? link('📝', 'Uy vazifalar', "Ustoz bergan topshiriqlar", 'data-go="homework"') : '') +
+    (role() === 'oquvchi' && !st.viewAs ? link('🏆', 'Reyting', 'Guruhim ichida o\'rningiz', 'data-go="rating"') : '') +
+    (role() === 'oquvchi' && !st.viewAs ? link('👪', 'Ota-onam uchun kod', 'Ular ilovadan kuzata oladi', 'data-act="mycode"') : '') +
+    '</div>';
   h += '<div class="card">' +
+    link('💬', 'Izoh va taklif', isStaff() && !st.viewAs ? "O'quvchilardan kelgan xabarlar" : 'Fikr va takliflaringizni yozing', 'data-go="feedback"') +
+    (isStaff() && !st.viewAs ? link('📊', 'Oylik hisobot', "Davomat va o'zlashtirish", 'data-go="report"') : '') +
+    link('🔍', 'Kitobdan qidirish', "So'z yoki harf bo'yicha", 'data-go="search"') +
     link('🏫', 'Markaz haqida', '', 'data-go="center"') +
     link('📘', 'Yo\'riqnoma', 'Ilova qanday ishlaydi', 'data-go="guide"') +
     link('❔', 'Savol-javob', '', 'data-go="faq"') +
@@ -1019,7 +1325,8 @@ function rGrp() {
       var on = !!mark[s.id];
       h += '<div class="att' + (on ? ' on' : '') + (qulf ? ' lock' : '') + '"' + (qulf ? '' : ' data-act="att" data-id="' + s.id + '"') + '>' +
         '<span class="box">' + (on ? '✓' : '') + '</span><span class="nm">' + esc(s.name) + '</span>' +
-        (s.user_id ? '' : '<span class="hint" style="font-size:11.5px">ilovaga kirmagan</span>') + '</div>';
+        (s.user_id ? '' : '<span class="hint" style="font-size:11.5px">ilovaga kirmagan</span>') +
+        '<button class="wbtn" data-go="student" data-id="' + s.id + '" title="Kartasi">ℹ️</button></div>';
     });
     if (qulf) h += '<div class="hint" style="text-align:center;margin-top:12px">✓ Saqlangan — o\'zgartirishni Ustoz+ qiladi</div>';
     else h += '<button class="btn gold wide" style="margin-top:12px" data-act="attsave">' + (d.saved ? 'Qayta saqlash' : 'Saqlash') + '</button>' +
@@ -1034,6 +1341,9 @@ function rGrp() {
   for (var k = 1; k <= N; k++)
     h += '<button class="lc' + (k <= ochiq ? ' on' : '') + (k === ochiq ? ' edge' : '') + '" data-act="setopen" data-n="' + k + '">' + k + '</button>';
   h += '</div></div>';
+
+  h += rGrpHomework(g.id);
+  h += '<button class="btn ghost wide" data-go="rating" data-gid="' + esc(g.id) + '">🏆 Guruh reytingi</button>';
   return h;
 }
 
@@ -1106,8 +1416,8 @@ function rUsers() {
    ============================================================ */
 var SCREENS = { home: rHome, lessons: rLessons, lesson: rLesson, book: rBook, video: rVideo, test: rTest, mashq: rMashq, mashqList: rMashqList, mashqBlocks: rMashqBlocks, imtihon: rImtihon,
   profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups, users: rUsers,
-  grp: rGrp, grpnew: rGrpNew };
-var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1, grpnew: 1 };
+  grp: rGrp, grpnew: rGrpNew, homework: rHomework, feedback: rFeedback, search: rSearch, rating: rRating, report: rReport, student: rStudentCard };
+var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1, grpnew: 1, homework: 1, feedback: 1, search: 1, report: 1 };
 var ICONS = {
   home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>',
   lessons: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
@@ -1116,11 +1426,14 @@ var ICONS = {
   profile: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>'
 };
 function render() {
+  if (parentMode) return renderParent();
   if (!gateOK()) {
     document.getElementById('view').innerHTML = rGate();
     document.getElementById('nav').innerHTML = '';
     var inp = document.getElementById('code');
     if (inp) { inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryGate(); }); inp.focus(); }
+    var pinp = document.getElementById('pcode');
+    if (pinp) { pinp.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryPGate(); }); pinp.focus(); }
     return;
   }
   var fn = SCREENS[st.screen] || rHome;
@@ -1148,6 +1461,8 @@ document.getElementById('app').addEventListener('click', function (e) {
       return go('grp', { id: t.dataset.id });
     }
     if (g === 'grpnew') { st.form = { days: [] }; return go('grpnew'); }
+    if (g === 'student') { st.scard = null; return go('student', { id: t.dataset.id }); }
+    if (g === 'rating') { st.rating = null; return go('rating', { gid: t.dataset.gid || '' }); }
     if (SIMPLE[g]) return go(g);
     if (g === 'lesson') {
       if (n < 1 || n > N) return;
@@ -1234,6 +1549,89 @@ document.getElementById('app').addEventListener('click', function (e) {
       else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
     });
   }
+  /* ---- uy vazifa ---- */
+  if (a === 'hwdone') {
+    var hid = +t.dataset.id, undo = t.dataset.undo === '1';
+    return apiCall('homework_done', { id: hid, undo: undo }, function (j) {
+      if (j && j.ok) { st.hw = null; toast(undo ? 'Bekor qilindi' : 'Bajarildi ✓'); render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'hwadd') {
+    var gid3 = t.dataset.gid, txt2 = ((st.form && st.form.hwtext) || '').trim();
+    if (!txt2) return toast('Matn yozing');
+    return apiCall('homework_add', { group: gid3, text: txt2, n: st.grpN || 0 }, function (j) {
+      if (j && j.ok) { toast('Qo\'shildi ✓'); st.form.hwtext = ''; st.ghw = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'hwdel') {
+    if (!confirm('Vazifa o\'chirilsinmi?')) return;
+    return apiCall('homework_del', { id: +t.dataset.id }, function (j) {
+      if (j && j.ok) { st.ghw = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- izoh va taklif ---- */
+  if (a === 'fbkind') { st.fbKind = t.dataset.k; return render(); }
+  if (a === 'fbsend') {
+    var ftxt = ((st.form && st.form.fbtext) || '').trim();
+    if (!ftxt) return toast('Xabar yozing');
+    return apiCall('feedback_add', { kind: st.fbKind || 'taklif', text: ftxt }, function (j) {
+      if (j && j.ok) { toast('Yuborildi ✓'); if (st.form) st.form.fbtext = ''; st.fbmine = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'fbstatus') {
+    var fid = +t.dataset.id, fs = t.dataset.s, freply = (st.form && st.form['fbreply' + fid]) || '';
+    return apiCall('feedback_reply', { id: fid, status: fs, reply: freply }, function (j) {
+      if (j && j.ok) { toast('Saqlandi ✓'); st.fb = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- o'quvchi kartasi: to'lov va ota-ona kodi ---- */
+  if (a === 'setpaid') {
+    var uid2 = +t.dataset.uid, dt = (st.form && st.form['paiduntil' + t.dataset.sid]) || '';
+    if (!dt) return toast('Sanani tanlang');
+    return apiCall('setpaid', { user: uid2, until: dt }, function (j) {
+      if (j && j.ok) { toast('Belgilandi ✓'); st.scard = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'gencode') {
+    return apiCall('parentcode', { student: +t.dataset.id }, function (j) {
+      if (j && j.ok) { toast('Kod tayyor'); st.scard = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'mycode') {
+    return apiCall('parentcode', {}, function (j) {
+      if (j && j.ok) { st.mycode = j.code; toast('Kod tayyor'); render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi — avval guruhga qo\'shilishingiz kerak'));
+    });
+  }
+
+  /* ---- ota-ona rejimi ---- */
+  if (a === 'gatemode') { st.gateMode = t.dataset.m; st.gateErr = false; st.pgateErr = false; return render(); }
+  if (a === 'pgate') return tryPGate();
+  if (a === 'pgate2') return tryPGate2();
+  if (a === 'pvadd') { st.pvAdd = true; return render(); }
+  if (a === 'pvaddx') { st.pvAdd = false; return render(); }
+  if (a === 'punlink') {
+    parentMode = false; try { localStorage.removeItem(PARENTKEY); } catch (e) {}
+    st.pv = null; st.pvAdd = false; return render();
+  }
+
+  /* ---- eslatmalarni qo'lda yuborish (ustoz+) ---- */
+  if (a === 'sendrem') {
+    return apiCall('sendreminders', { force: false }, function (j) {
+      if (j && j.ok) toast(j.sent + ' ta eslatma yuborildi');
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
   if (a === 'rebook') { st.book = null; return render(); }
   if (a === 'fs') return setFS(+t.dataset.d);
   if (a === 'playvid') {
@@ -1269,6 +1667,14 @@ document.getElementById('app').addEventListener('click', function (e) {
 document.getElementById('app').addEventListener('input', function (e) {
   var t = e.target.closest('[data-f]'); if (!t) return;
   (st.form = st.form || { days: [] })[t.dataset.f] = t.value;          // guruh shakli maydonlari
+  if (t.dataset.f === 'q' && st.screen === 'search') {                 // kitobdan qidirish — jonli
+    clearTimeout(st._searchT);
+    st._searchT = setTimeout(function () {
+      render();
+      var el = document.querySelector('[data-f="q"]');
+      if (el) { el.focus(); var v = el.value; el.value = ''; el.value = v; }
+    }, 350);
+  }
 });
 document.getElementById('app').addEventListener('change', function (e) {
   var t = e.target.closest('[data-act="setgroup"],[data-act="ugroup"]');

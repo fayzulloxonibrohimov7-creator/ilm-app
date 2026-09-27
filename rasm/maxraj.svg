@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 580" width="100%" font-family="-apple-system,'Segoe UI',Roboto,sans-serif">
+  <title>Nutq a'zolari (maxrajlar)</title>
+  <defs>
+    <linearGradient id="mx-teri" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE7C4"/><stop offset="1" stop-color="#F0C48C"/>
+    </linearGradient>
+    <linearGradient id="mx-burun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF9B6B"/><stop offset="1" stop-color="#E0552B"/>
+    </linearGradient>
+    <linearGradient id="mx-til" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4787A"/><stop offset="1" stop-color="#BE3038"/>
+    </linearGradient>
+    <linearGradient id="mx-halqum" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6FB6F2"/><stop offset="1" stop-color="#2A6CB4"/>
+    </linearGradient>
+    <linearGradient id="mx-opka" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F6A9BC"/><stop offset="1" stop-color="#D2637F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- sarlavha -->
+  <rect x="282" y="12" width="316" height="44" rx="22" fill="#F4DC8A" stroke="#D4AF37" stroke-width="2"/>
+  <text x="440" y="41" text-anchor="middle" font-size="21" font-weight="700" font-style="italic" fill="#2A2105">Nutq a'zolari (maxrajlar)</text>
+
+  <!-- ================= BOSH KESIMI (chapga qaragan) ================= -->
+  <g transform="translate(34,76)">
+
+    <!-- yuz profili: peshona · burun · lablar · iyak · bo'yin -->
+    <path d="M318 2
+             C214 6 150 56 134 118 C128 142 126 154 122 164
+             C114 178 92 190 66 202 C50 210 50 220 70 226
+             C86 231 100 230 112 228 L118 234
+             C122 244 120 252 112 258
+             C104 264 104 272 114 276 L126 280
+             C124 292 118 300 108 306 C100 312 102 320 114 324
+             C122 327 128 334 132 344
+             C140 364 158 382 186 394 C214 406 234 420 240 440
+             L240 470 L472 470 L472 424
+             C472 402 486 384 506 366 C556 322 578 256 572 188
+             C562 84 462 -2 318 2 Z"
+          fill="url(#mx-teri)" stroke="#C99A62" stroke-width="2.5" stroke-linejoin="round"/>
+
+    <!-- burun bo'shlig'i: burun ichidan orqaga cho'zilgan -->
+    <path d="M84 208 C112 176 164 152 224 144 C294 134 358 138 396 150
+             C416 156 422 172 412 184 C398 200 338 210 266 212
+             C204 214 142 212 106 218 C88 221 78 216 84 208 Z"
+          fill="url(#mx-burun)" stroke="#B23A1E" stroke-width="2"/>
+    <path d="M114 200 C154 174 212 160 272 158" fill="none" stroke="#fff" stroke-width="2.5" opacity=".45" stroke-linecap="round"/>
+    <!-- burun teshigi -->
+    <path d="M74 220 C84 214 96 214 104 218" fill="none" stroke="#C99A62" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- qattiq tanglay (yashil) va yumshoq tanglay + kichik til -->
+    <path d="M150 232 C222 226 312 226 386 234" fill="none" stroke="#2F7D3B" stroke-width="11" stroke-linecap="round"/>
+    <path d="M386 234 C406 238 420 250 426 266 C430 278 428 290 420 298"
+          fill="none" stroke="#2F7D3B" stroke-width="11" stroke-linecap="round"/>
+    <path d="M420 298 C416 306 414 314 416 322" fill="none" stroke="#2F7D3B" stroke-width="7" stroke-linecap="round"/>
+
+    <!-- og'iz bo'shlig'i (bo'sh joy) -->
+    <path d="M128 248 C214 238 312 238 388 248 C396 262 396 276 388 286
+             C310 268 214 266 136 282 C126 270 124 258 128 248 Z"
+          fill="#0E2A46" opacity=".2"/>
+
+    <!-- til: og'iz tubiga yopishgan, uchi lablarga qaragan -->
+    <path d="M126 284 C170 264 244 254 316 264 C372 272 404 292 410 320
+             C416 348 396 368 354 374 C288 384 208 378 164 362
+             C140 353 128 338 126 318 C125 303 124 292 126 284 Z"
+          fill="url(#mx-til)" stroke="#9B2630" stroke-width="2"/>
+    <path d="M160 300 C214 282 288 276 344 290" fill="none" stroke="#fff" stroke-width="2.5" opacity=".35" stroke-linecap="round"/>
+    <path d="M186 338 C244 350 316 350 372 336" fill="none" stroke="#8E2028" stroke-width="2" opacity=".5" stroke-linecap="round"/>
+
+    <!-- tishlar: yuqori va pastki qator -->
+    <g fill="#FFFFFF" stroke="#C6B7A0" stroke-width="1.4">
+      <path d="M128 234 l16 0 0 20 -16 2 z"/>
+      <path d="M146 233 l15 0 0 20 -15 1 z"/>
+      <path d="M128 276 l16 -2 0 20 -16 0 z"/>
+      <path d="M146 275 l15 -1 0 20 -15 0 z"/>
+    </g>
+
+    <!-- lablar -->
+    <path d="M108 232 C120 230 128 238 128 250 C128 260 120 266 110 264 C100 262 96 252 98 242 C100 235 103 233 108 232 Z"
+          fill="#DF6B7C" stroke="#AE4557" stroke-width="2"/>
+    <path d="M110 272 C122 270 130 278 130 290 C130 302 120 308 110 305 C100 302 96 292 98 282 C100 275 105 273 110 272 Z"
+          fill="#DF6B7C" stroke="#AE4557" stroke-width="2"/>
+
+    <!-- halqum (tomoq) — tanglay orqasidan pastga -->
+    <path d="M424 262 C446 272 456 292 456 318 L456 470 L412 470 L412 330
+             C412 300 414 278 424 262 Z"
+          fill="url(#mx-halqum)" stroke="#215A94" stroke-width="2"/>
+    <path d="M434 330 L434 458" fill="none" stroke="#fff" stroke-width="2.5" opacity=".35" stroke-linecap="round"/>
+
+    <!-- tovush paychalari (halqum ichida) -->
+    <g transform="translate(434,408)">
+      <path d="M-15 0 C-6 -9 6 -9 15 0 C6 9 -6 9 -15 0 Z" fill="#F4DC8A" stroke="#B8921E" stroke-width="1.5"/>
+    </g>
+  </g>
+
+  <!-- ================= O'PKA ================= -->
+  <g transform="translate(658,318)">
+    <path d="M58 0 L58 40" stroke="#C99A62" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M58 40 C42 54 26 64 22 88" stroke="#C99A62" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M58 40 C74 54 90 64 94 88" stroke="#C99A62" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M48 50 C26 58 4 88 4 126 C4 158 16 178 34 178 C48 178 52 162 52 138 L52 60 C52 51 51 49 48 50 Z"
+          fill="url(#mx-opka)" stroke="#B5546E" stroke-width="2"/>
+    <path d="M68 50 C90 58 112 88 112 126 C112 158 100 178 82 178 C68 178 64 162 64 138 L64 60 C64 51 65 49 68 50 Z"
+          fill="url(#mx-opka)" stroke="#B5546E" stroke-width="2"/>
+    <g fill="none" stroke="#fff" opacity=".4" stroke-width="2" stroke-linecap="round">
+      <path d="M30 78 C22 96 20 118 24 142"/><path d="M86 78 C94 96 96 118 92 142"/>
+    </g>
+  </g>
+
+  <!-- ================= YORLIQLAR ================= -->
+  <g font-size="19" font-weight="700" font-style="italic" fill="#12304F">
+    <g stroke="#1B3A5C" stroke-width="2" fill="none" stroke-linecap="round">
+      <path d="M140 326 L58 326"/>
+      <path d="M170 386 L58 386"/>
+      <path d="M250 446 L58 446"/>
+      <path d="M300 236 L592 236"/>
+      <path d="M300 340 L592 340"/>
+      <path d="M470 470 L592 470"/>
+      <path d="M712 468 L712 546 L812 546"/>
+    </g>
+    <g fill="#1B3A5C">
+      <circle cx="140" cy="326" r="5"/><circle cx="170" cy="386" r="5"/><circle cx="250" cy="446" r="5"/>
+      <circle cx="300" cy="236" r="5"/><circle cx="300" cy="340" r="5"/><circle cx="470" cy="470" r="5"/>
+      <circle cx="712" cy="468" r="5"/>
+    </g>
+    <text x="10" y="318">Lablar</text>
+    <text x="10" y="378">Tishlar</text>
+    <text x="10" y="438">Til</text>
+    <text x="600" y="228">Burun bo'shlig'i</text>
+    <text x="600" y="332">Og'iz bo'shlig'i</text>
+    <text x="600" y="462">Halqum</text>
+    <text x="820" y="552">O'pka</text>
+  </g>
+</svg>
