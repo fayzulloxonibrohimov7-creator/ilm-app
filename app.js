@@ -92,6 +92,7 @@ function syncNow(first) {
     srv.grp = j.group || null;                                // guruh ma'lumoti serverdan
     srv.openTo = j.openTo | 0;                                // ustoz shu darsgacha ochgan
     srv.attend = j.attend || null;                            // { dars: 1/0 } — o'z davomati
+    if (j.center) ILM.center = j.center;                      // markaz ma'lumotlari serverdan (ustoz+ tahrirlagan)
     if (j.me.role) st.role = j.me.role;                       // rol serverdan
     if (j.me.group) progress.group = j.me.group;              // guruhni ustoz biriktiradi
     if (j.progress && (j.updated || 0) > (progress.updated || 0)) { progress = merge(fresh(), j.progress); }
@@ -1241,6 +1242,7 @@ function rProfile() {
 /* ---- Markaz haqida / Yo'riqnoma / Savol-javob / Yordam / Ilova haqida ---- */
 function rCenter() {
   var c = ILM.center || {}, h = top('Markaz haqida', esc(ILM.app.name), true);
+  if (isPlus() && st.centerEdit) return h + rCenterEdit(c);
   var br = c.branches || (c.address ? [{ name: 'Manzil', address: c.address, mapUrl: c.mapUrl }] : []);
   if (br.length) {
     h += '<div class="card">';
@@ -1254,7 +1256,24 @@ function rCenter() {
     link('🕘', 'Ish vaqti', c.hours ? esc(c.hours) : '—', 'data-act="none"') +
     (c.email ? link('✉️', 'Email', esc(c.email), 'data-act="open" data-url="mailto:' + esc(c.email) + '"') : '') + '</div>';
   if (!br.length && !c.phone) h += '<div class="hint" style="text-align:center">Ma\'lumotlar tez orada to\'ldiriladi</div>';
+  if (isPlus()) h += '<div class="row" style="gap:8px"><button class="btn sm ghost" data-act="centeredit">✏️ Tahrirlash</button></div>';
   return h;
+}
+function rCenterEdit(c) {
+  var f = st.form || {};
+  var brText = f.centerbr != null ? f.centerbr : (c.branches || []).map(function (b) {
+    return [b.name || '', b.address || '', b.mapUrl || ''].join(' | ');
+  }).join('\n');
+  return '<div class="card">' +
+    '<div class="fld"><label>Telefon</label><input class="inp2" data-f="centerphone" value="' + esc(f.centerphone != null ? f.centerphone : (c.phone || '')) + '"></div>' +
+    '<div class="fld"><label>Operator (Telegram username, @ siz)</label><input class="inp2" data-f="centertg" value="' + esc(f.centertg != null ? f.centertg : (c.telegram || '')) + '"></div>' +
+    '<div class="fld"><label>Telegram kanal (@ siz)</label><input class="inp2" data-f="centerch" value="' + esc(f.centerch != null ? f.centerch : (c.channel || '')) + '"></div>' +
+    '<div class="fld"><label>Ish vaqti</label><input class="inp2" data-f="centerhours" value="' + esc(f.centerhours != null ? f.centerhours : (c.hours || '')) + '"></div>' +
+    '<div class="fld"><label>Email</label><input class="inp2" data-f="centeremail" value="' + esc(f.centeremail != null ? f.centeremail : (c.email || '')) + '"></div>' +
+    '<div class="fld"><label>Filiallar — har biri alohida qatorda: Nomi | Manzil | Xarita havolasi (ixtiyoriy)</label>' +
+    '<textarea class="inp2 ta" data-f="centerbr" rows="4" placeholder="1-filial · Beruniy | Beruniy ko\'chasi, 35 A | https://maps.google.com/...">' + esc(brText) + '</textarea></div>' +
+    '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="centersave">Saqlash</button><button class="btn sm ghost" data-act="centereditx">Bekor qilish</button></div>' +
+    '</div>';
 }
 function rGuide() { return top('Yo\'riqnoma', 'Ilova qanday ishlaydi', true) + accordion('g', ILM.guide || []); }
 function rFaq() { return top('Savol-javob', 'Ko\'p beriladigan savollar', true) + accordion('f', ILM.faq || []); }
@@ -1742,6 +1761,29 @@ document.getElementById('app').addEventListener('click', function (e) {
     return apiCall('delstudent', { id: +t.dataset.id }, function (j) {
       if (j && j.ok) { toast('O\'chirildi'); st.grp = null; back(); }
       else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
+  /* ---- markaz ma'lumotlari (faqat ustoz+) ---- */
+  if (a === 'centeredit') { st.centerEdit = true; return render(); }
+  if (a === 'centereditx') { st.centerEdit = false; return render(); }
+  if (a === 'centersave') {
+    var f9 = st.form || {};
+    var brLines = ((f9.centerbr != null ? f9.centerbr : '') || '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    var branches9 = brLines.map(function (l) {
+      var parts = l.split('|').map(function (p) { return p.trim(); });
+      return { name: parts[0] || '', address: parts[1] || '', mapUrl: parts[2] || '' };
+    });
+    var center9 = {
+      phone: (f9.centerphone || '').trim(), telegram: (f9.centertg || '').trim(), channel: (f9.centerch || '').trim(),
+      hours: (f9.centerhours || '').trim(), email: (f9.centeremail || '').trim(), branches: branches9
+    };
+    return apiCall('savecenter', { center: center9 }, function (j) {
+      if (j && j.ok) {
+        toast('Saqlandi ✓'); ILM.center = j.center; st.centerEdit = false;
+        ['centerphone', 'centertg', 'centerch', 'centerhours', 'centeremail', 'centerbr'].forEach(function (k) { if (st.form) delete st.form[k]; });
+        render();
+      } else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
     });
   }
 
