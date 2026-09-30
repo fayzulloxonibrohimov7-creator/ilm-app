@@ -1164,6 +1164,7 @@ function rMashqList() {
       var s = lessonState(n), open = s !== 'locked';
       h += '<div class="lesson ' + (open ? (s === 'done' ? 'done' : 'open') : 'locked') + '" data-act="practice" data-n="' + n + '"><div class="num">' + n + '</div>' +
         '<div class="ttl"><div class="ar empty">' + n + '-dars testi</div><div class="uz">' + (ILM.tests[n] || []).length + ' savol' + esc(lt(n)) + '</div></div>' +
+        (isPlus() ? '<button class="wbtn" data-go="qedit" data-scope="lesson" data-ref="' + n + '" title="Savollarni tahrirlash">✏️</button>' : '') +
         '<div class="st">' + (open ? '›' : '🔒') + '</div></div>';
     }
   });
@@ -1196,9 +1197,61 @@ function rImtihon() {
       '<div class="kicker">' + (e.type === 'mini' ? 'Mini' : e.type === 'oraliq' ? 'Oraliq' : 'Yakuniy') + ' imtihon</div>' +
       '<div class="t">' + esc(e.title) + '</div><div class="d">' + e.after + '-darsdan keyin · ' + ILM.examQ[e.id].length + ' nazariy' +
       (e.oral ? ' + ' + e.oral + ' amaliy (og\'zaki, ustoz baholaydi)' : '') + ' · o\'tish ' + ILM.rules.examPassPct + '%</div>' +
-      '</div><div class="st" style="font-weight:600">' + right + '</div></div></div>';
+      '</div>' + (isPlus() ? '<button class="wbtn" data-go="qedit" data-scope="exam" data-ref="' + e.id + '" title="Savollarni tahrirlash">✏️</button>' : '') +
+      '<div class="st" style="font-weight:600">' + right + '</div></div></div>';
   });
   return h;
+}
+
+/* ---- Savollarni tahrirlash (Ustoz+) ---- */
+function qTypeLabel(t) { return t === 'truefalse' ? 'Tasdiq (to\'g\'ri/noto\'g\'ri)' : t === 'audio' ? 'Audio' : 'Tanlov'; }
+function qCorrectDefault(q) {
+  if (!q || q.c == null) return '';
+  if (q.t === 'truefalse') return q.c ? 'to\'g\'ri' : 'noto\'g\'ri';
+  return String((q.c | 0) + 1);
+}
+function rQEdit() {
+  var scope = st.params.scope, ref = st.params.ref;
+  var exam = scope === 'exam' ? (ILM.exams.filter(function (e) { return e.id === ref; })[0] || {}) : null;
+  var label = scope === 'exam' ? (exam.title || ref) : (ref + '-dars testi');
+  var h = top('Savollarni tahrirlash', label, true);
+  if (!isPlus()) return h + empty('🔒', 'Ruxsat yo\'q', 'Faqat Ustoz+ tahrirlay oladi');
+  if (!st.qedit || st.qedit.scope !== scope || st.qedit.ref !== ref) {
+    st.qedit = { scope: scope, ref: ref, loading: true };
+    apiCall('qlist', { scope: scope, ref: ref }, function (j) {
+      st.qedit = { scope: scope, ref: ref, list: (j && j.ok) ? j.list : [], err: (!j || !j.ok) ? ((j && j.error) || 'ulanmadi') : null };
+      render();
+    });
+    return h + empty('⏳', 'Yuklanmoqda…', '');
+  }
+  if (st.qedit.loading) return h + empty('⏳', 'Yuklanmoqda…', '');
+  if (st.qedit.err) return h + empty('⚠️', 'Ochilmadi', esc(st.qedit.err));
+  var list = st.qedit.list || [];
+  h += '<div class="hint" style="text-align:center">' + (list.length ? list.length + ' ta savol serverda saqlangan' : 'Hali server savoli yo\'q — namuna savollar ko\'rsatilmoqda') + '</div>';
+  list.forEach(function (q, i) {
+    if (st.qeditId === q.id) { h += rQForm(q); return; }
+    h += '<div class="card"><div class="row"><div class="grow"><div class="t">' + (i + 1) + '. ' + esc(q.q) + '</div>' +
+      '<div class="d">' + qTypeLabel(q.t) + ' · to\'g\'ri: ' + (q.t === 'truefalse' ? (q.c ? 'To\'g\'ri' : 'Noto\'g\'ri') : esc((q.a && q.a[q.c]) || '?')) + '</div></div>' +
+      '<button class="wbtn" data-act="qedit" data-id="' + q.id + '" title="Tahrirlash">✏️</button>' +
+      '<button class="wbtn" data-act="qdel" data-id="' + q.id + '" title="O\'chirish">🗑️</button>' +
+      '</div></div>';
+  });
+  h += st.qeditId === 'new' ? rQForm({ scope: scope, ref: ref }) :
+    '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="qnew">+ Yangi savol qo\'shish</button></div>';
+  return h;
+}
+function rQForm(q) {
+  var f = st.form || {};
+  return '<div class="card">' +
+    '<div class="fld"><label>Turi</label><select class="sel" data-f="qtype">' +
+    ['choice', 'truefalse', 'audio'].map(function (tp) { return '<option value="' + tp + '"' + ((f.qtype != null ? f.qtype : q.t) === tp ? ' selected' : '') + '>' + qTypeLabel(tp) + '</option>'; }).join('') +
+    '</select></div>' +
+    '<div class="fld"><label>Savol matni</label><textarea class="inp2 ta" data-f="qtext" rows="2">' + esc(f.qtext != null ? f.qtext : (q.q || '')) + '</textarea></div>' +
+    '<div class="fld"><label>Javob variantlari (har biri alohida qatorda — «Tasdiq» turida shart emas)</label><textarea class="inp2 ta" data-f="qopts" rows="4">' + esc(f.qopts != null ? f.qopts : ((q.a || []).join('\n'))) + '</textarea></div>' +
+    '<div class="fld"><label>To\'g\'ri javob — «Tasdiq» uchun: to\'g\'ri / noto\'g\'ri; boshqalar uchun: variant raqami (1 dan)</label><input class="inp2" data-f="qcorrect" value="' + esc(f.qcorrect != null ? f.qcorrect : qCorrectDefault(q)) + '"></div>' +
+    '<div class="fld"><label>Audio fayl manzili (ixtiyoriy, faqat Audio turi uchun)</label><input class="inp2" data-f="qsrc" value="' + esc(f.qsrc != null ? f.qsrc : (q.src || '')) + '"></div>' +
+    '<div class="row" style="gap:8px"><button class="btn sm gold" data-act="qsave" data-id="' + (q.id || '') + '">Saqlash</button><button class="btn sm ghost" data-act="qeditx">Bekor qilish</button></div>' +
+    '</div>';
 }
 
 /* ---- Profil ---- */
@@ -1490,7 +1543,7 @@ function rUsers() {
    ============================================================ */
 var SCREENS = { home: rHome, lessons: rLessons, lesson: rLesson, book: rBook, video: rVideo, test: rTest, mashq: rMashq, mashqList: rMashqList, mashqBlocks: rMashqBlocks, imtihon: rImtihon,
   profile: rProfile, center: rCenter, guide: rGuide, faq: rFaq, help: rHelp, about: rAbout, groups: rGroups, users: rUsers,
-  grp: rGrp, grpnew: rGrpNew, homework: rHomework, feedback: rFeedback, search: rSearch, rating: rRating, report: rReport, student: rStudentCard };
+  grp: rGrp, grpnew: rGrpNew, homework: rHomework, feedback: rFeedback, search: rSearch, rating: rRating, report: rReport, student: rStudentCard, qedit: rQEdit };
 var SIMPLE = { center: 1, guide: 1, faq: 1, help: 1, about: 1, groups: 1, users: 1, grpnew: 1, homework: 1, feedback: 1, search: 1, report: 1 };
 var ICONS = {
   home: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-6H9v6H5a2 2 0 0 1-2-2z"/></svg>',
@@ -1537,6 +1590,7 @@ document.getElementById('app').addEventListener('click', function (e) {
     if (g === 'grpnew') { st.form = { days: [] }; return go('grpnew'); }
     if (g === 'student') { st.scard = null; return go('student', { id: t.dataset.id }); }
     if (g === 'rating') { st.rating = null; return go('rating', { gid: t.dataset.gid || '' }); }
+    if (g === 'qedit') { st.qedit = null; st.qeditId = null; st.form = {}; return go('qedit', { scope: t.dataset.scope, ref: t.dataset.ref }); }
     if (SIMPLE[g]) return go(g);
     if (g === 'lesson') {
       if (n < 1 || n > N) return;
@@ -1787,6 +1841,34 @@ document.getElementById('app').addEventListener('click', function (e) {
     });
   }
 
+  /* ---- test/imtihon savollarini tahrirlash (faqat ustoz+) ---- */
+  if (a === 'qnew') { st.qeditId = 'new'; st.form = {}; return render(); }
+  if (a === 'qedit') { st.qeditId = +t.dataset.id; st.form = {}; return render(); }
+  if (a === 'qeditx') { st.qeditId = null; st.form = {}; return render(); }
+  if (a === 'qsave') {
+    var f10 = st.form || {};
+    var type10 = f10.qtype || 'choice';
+    var opts10 = (f10.qopts || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+    var qtext10 = (f10.qtext || '').trim();
+    if (!qtext10) return toast('Savol matnini kiriting');
+    var corr10;
+    if (type10 === 'truefalse') { var cv = (f10.qcorrect || '').trim().toLowerCase(); corr10 = (cv === 'to\'g\'ri' || cv === 'togri' || cv === 'true') ? true : false; }
+    else corr10 = Math.max(0, (parseInt(f10.qcorrect, 10) || 1) - 1);
+    var qid10 = t.dataset.id ? +t.dataset.id : null;
+    var payload10 = { id: qid10, scope: st.qedit.scope, ref: String(st.qedit.ref), t: type10, q: qtext10, a: type10 === 'truefalse' ? [] : opts10, c: corr10, src: f10.qsrc || '' };
+    return apiCall('saveq', { q: payload10 }, function (j) {
+      if (j && j.ok) { toast('Saqlandi ✓'); st.qeditId = null; st.form = {}; st.qedit = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+  if (a === 'qdel') {
+    if (!confirm('Bu savol o\'chirilsinmi?')) return;
+    return apiCall('delq', { id: +t.dataset.id }, function (j) {
+      if (j && j.ok) { toast('O\'chirildi'); st.qedit = null; render(); }
+      else toast('Bo\'lmadi: ' + ((j && j.error) || 'ulanmadi'));
+    });
+  }
+
   /* ---- rol berish (faqat ustoz+) ---- */
   if (a === 'urole') {
     var uid7 = +t.dataset.user, r7 = t.dataset.r;
@@ -1901,6 +1983,12 @@ function tryGate() {
 /* ---------- ishga tushirish ---------- */
 render();
 loadCloud(function () { render(); syncNow(true); });
+apiCall('alltests', {}, function (j) {                     // serverda tahrirlangan savollar bo'lsa, namunalarni almashtiradi
+  if (!j || !j.ok) return;
+  if (j.tests) for (var k in j.tests) ILM.tests[k] = j.tests[k];
+  if (j.examQ) for (var k2 in j.examQ) ILM.examQ[k2] = j.examQ[k2];
+  render();
+});
 setInterval(function () { if (!document.hidden) syncNow(false); }, 120000);   // har 2 daqiqada «shu yerdaman»
 
 })();
